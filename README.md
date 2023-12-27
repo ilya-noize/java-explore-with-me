@@ -1,2 +1,3 @@
 # java-explore-with-me
-Template repository for ExploreWithMe project.
+
+![stat_svc](stat_svc.png "Stage 1")
