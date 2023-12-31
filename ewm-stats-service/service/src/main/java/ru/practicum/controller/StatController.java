@@ -19,7 +19,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 public class StatController {
-    private static final String pattern = "yyyy-MM-dd HH:mm:ss";
+    public static final String PATTERN = "yyyy-MM-dd HH:mm:ss";
     private final StatService service;
 
     @PostMapping("/hit")
@@ -29,10 +29,12 @@ public class StatController {
     }
 
     @GetMapping("/stats")
-    public List<ViewStatsDto> receive(@RequestParam @DateTimeFormat(pattern = pattern) LocalDateTime start,
-                                      @RequestParam @DateTimeFormat(pattern = pattern) LocalDateTime end,
-                                      @RequestParam(required = false) String[] uris,
-                                      @RequestParam(defaultValue = "false") Boolean unique) {
+    public List<ViewStatsDto> receive(
+            @RequestParam @DateTimeFormat(pattern = PATTERN) LocalDateTime start,
+            @RequestParam @DateTimeFormat(pattern = PATTERN) LocalDateTime end,
+            @RequestParam(required = false) String[] uris,
+            @RequestParam(defaultValue = "false") Boolean unique) {
+
         return service.getStatistic(start, end, uris, unique);
     }
 }

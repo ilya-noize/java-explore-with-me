@@ -21,14 +21,13 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Stat {
+public class Stats {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(nullable = false)
     private Long id;
     @Column(length = 64)
     private String app;
-    @Column(length = 255)
     private String uri;
     @Column(length = 39)
     private String ip;
