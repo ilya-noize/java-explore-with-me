@@ -1,76 +1,32 @@
 version: '3.1'
 services:
   stats-server:
-    build: stats/server
-    image: server
-    container_name: stats-server
     ports:
       - "9090:9090"
-    deploy:
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 1024M
-    networks:
-      - backend
-      - databases
+    container_name: stats-server
+    build: ewm-stats-service/service
     depends_on:
       - stats-db
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/stats-db
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/statistics
     env_file:
-      - ".env"
+      - "pass.env"
 
   stats-db:
-    build: stats-db
     image: postgres:14-alpine
     container_name: stats-db
     ports:
-      - "5342:5342"
-    networks:
-      - databases
+      - "6541:5432"
     environment:
-      - POSTGRES_DB=stats-db
+      - POSTGRES_DB=statistics
     env_file:
-      - ".env"
+      - "pass.env"
 
   ewm-service:
-    build: emw-service
-    image: service
-    container_name: emw-service
     ports:
       - "8080:8080"
-    depends_on:
-      - ewm-db
-      - stats-server
-    deploy:
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 512M
-    networks:
-      - frontend
-      - backend
-      - databases
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://main-db:5432/emw-db
-    env_file:
-      - ".env"
+    build: ewm-main-service
+    container_name: emw-service
 
-  ewm-db:
-    build: emw-db
-    image: postgres:14-alpine
-    container_name: emw-db
-    networks:
-      - databases
-    env_file:
-      - ".env"
-
-
-networks:
-  frontend:
-    driver: bridge
-  backend:
-    driver: bridge
-  databases:
-    driver: bridge
+#  ewm-db:
+#    image: postgres:14-alpine
