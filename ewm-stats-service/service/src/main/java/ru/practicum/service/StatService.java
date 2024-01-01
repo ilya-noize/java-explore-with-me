@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface StatService {
-    void saveEndpoint(HitDto dto);
+    HitDto saveForStatistic(HitDto dto);
 
     List<ViewStatsDto> getStatistic(
             LocalDateTime start,
