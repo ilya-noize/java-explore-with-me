@@ -40,6 +40,9 @@ class StatControllerTest {
 
     @Test
     void send() throws Exception {
+        when(service.send(any(HitDto.class)))
+                .thenReturn(hitDto);
+
         String urlTemplate = "/hit";
         mvc.perform(post(urlTemplate)
                         .content(mapper.writeValueAsString(hitDto))
