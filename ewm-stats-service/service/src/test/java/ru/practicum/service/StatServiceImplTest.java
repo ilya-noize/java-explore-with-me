@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 @AutoConfigureTestDatabase
 class StatServiceImplTest {
-    private final StatServiceImpl service;
+    private final StatService service;
 
     @Test
     void saveEndpoint() {
