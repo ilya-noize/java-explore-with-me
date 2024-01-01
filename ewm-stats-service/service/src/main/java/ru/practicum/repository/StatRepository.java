@@ -21,15 +21,11 @@ public interface StatRepository extends JpaRepository<Stat, Long> {
             " WHERE s.uri IN (:uris) " +
             " AND created BETWEEN :createdStart AND :createdEnd " +
             " GROUP BY s.app, s.uri " +
-            " ORDER BY hits")
+            " ORDER BY hits DESC")
     List<ViewStats> getByCreatedBetweenAndUriIn(
             @Param("createdStart") LocalDateTime createdStart,
             @Param("createdEnd") LocalDateTime createdEnd,
             @Param("uris") String[] uris);
-
-//    @Query("select new ru.practicum.model.ViewStats (s.app, s.uri, count(s.ip) as hits) from Stat s " +
-//            "where s.uri in (?1) and s.timestamp between ?2 and ?3 group by s.ip, s.uri, s.app order by hits desc")
-//    List<ViewStats> getByUris(String[] uris, LocalDateTime start, LocalDateTime end);
 
     /**
      * @param createdStart  Дата и время начала диапазона за который нужно выгрузить статистику
@@ -40,14 +36,10 @@ public interface StatRepository extends JpaRepository<Stat, Long> {
             " FROM Stat AS s " +
             " WHERE created BETWEEN :createdStart AND :createdEnd " +
             " GROUP BY s.app, s.uri " +
-            " ORDER BY hits")
+            " ORDER BY hits DESC")
     List<ViewStats> getByCreatedBetween(
             @Param("createdStart") LocalDateTime createdStart,
             @Param("createdEnd") LocalDateTime createdEnd);
-
-//    @Query("select new ru.practicum.model.ViewStats (s.app, s.uri, count(s.ip) as hits) from Stat s " +
-//            "where s.timestamp between ?1 and ?2 group by s.ip, s.uri, s.app order by hits desc")
-//    List<ViewStats> getByStartAndEnd(LocalDateTime start, LocalDateTime end);
 
     /**
      * @param createdStart  Дата и время начала диапазона за который нужно выгрузить статистику
@@ -60,16 +52,11 @@ public interface StatRepository extends JpaRepository<Stat, Long> {
             " WHERE s.uri IN (:uris) " +
             " AND created BETWEEN :createdStart AND :createdEnd " +
             " GROUP BY s.app, s.uri " +
-            " ORDER BY hits")
+            " ORDER BY hits DESC")
     List<ViewStats> getByCreatedBetweenAndUriInAndUniqueIp(
             @Param("createdStart") LocalDateTime createdStart,
             @Param("createdEnd") LocalDateTime createdEnd,
             @Param("uris") String[] uris);
-
-//    @Query("select distinct new ru.practicum.model.ViewStats (s.app, s.uri, count(distinct s.ip) as hits) " +
-//            "from Stat s where s.uri in (?1) and s.timestamp between ?2 and ?3 group by s.ip, s.uri, s.app " +
-//            "order by hits desc")
-//    List<ViewStats> getDistinctByUris(String[] uris, LocalDateTime start, LocalDateTime end);
 
     /**
      * @param createdStart  Дата и время начала диапазона за который нужно выгрузить статистику
@@ -80,12 +67,8 @@ public interface StatRepository extends JpaRepository<Stat, Long> {
             " FROM Stat AS s " +
             " WHERE created BETWEEN :createdStart AND :createdEnd " +
             " GROUP BY s.app, s.uri " +
-            " ORDER BY hits")
+            " ORDER BY hits DESC")
     List<ViewStats> getByCreatedBetweenAndUniqueIp(
             @Param("createdStart") LocalDateTime createdStart,
             @Param("createdEnd") LocalDateTime createdEnd);
-
-//    @Query("select distinct new ru.practicum.model.ViewStats (s.app, s.uri, count(distinct s.ip) as hits) " +
-//            "from Stat s where s.timestamp between ?1 and ?2 group by s.ip, s.uri, s.app order by hits desc")
-//    List<ViewStats> getDistinctByStartAndEnd(LocalDateTime start, LocalDateTime end);
 }
