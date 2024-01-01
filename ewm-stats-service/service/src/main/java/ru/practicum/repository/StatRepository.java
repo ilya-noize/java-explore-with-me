@@ -3,7 +3,7 @@ package ru.practicum.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import ru.practicum.model.ShowStats;
+import ru.practicum.model.ViewStats;
 import ru.practicum.model.Stats;
 
 import java.time.LocalDateTime;
@@ -23,7 +23,7 @@ public interface StatRepository extends JpaRepository<Stats, Long> {
             " GROUP BY s.APP, s.URI " +
             " ORDER BY hits",
             nativeQuery = true)
-    List<ShowStats> getByCreatedBetweenAndUriIn(
+    List<ViewStats> getByCreatedBetweenAndUriIn(
             @Param("createdStart") LocalDateTime createdStart,
             @Param("createdEnd") LocalDateTime createdEnd,
             @Param("uris") String uris);
@@ -39,7 +39,7 @@ public interface StatRepository extends JpaRepository<Stats, Long> {
             " GROUP BY s.APP, s.URI " +
             " ORDER BY hits",
             nativeQuery = true)
-    List<ShowStats> getByCreatedBetween(
+    List<ViewStats> getByCreatedBetween(
             @Param("createdStart") LocalDateTime createdStart,
             @Param("createdEnd") LocalDateTime createdEnd);
 
@@ -56,7 +56,7 @@ public interface StatRepository extends JpaRepository<Stats, Long> {
             " GROUP BY s.APP, s.URI " +
             " ORDER BY hits",
             nativeQuery = true)
-    List<ShowStats> getByCreatedBetweenAndUriInAndUniqueIp(
+    List<ViewStats> getByCreatedBetweenAndUriInAndUniqueIp(
             @Param("createdStart") LocalDateTime createdStart,
             @Param("createdEnd") LocalDateTime createdEnd,
             @Param("uris") String uris);
@@ -72,7 +72,7 @@ public interface StatRepository extends JpaRepository<Stats, Long> {
             " GROUP BY s.APP, s.URI " +
             " ORDER BY hits",
             nativeQuery = true)
-    List<ShowStats> getByCreatedBetweenAndUniqueIp(
+    List<ViewStats> getByCreatedBetweenAndUniqueIp(
             @Param("createdStart") LocalDateTime createdStart,
             @Param("createdEnd") LocalDateTime createdEnd);
 }
