@@ -7,9 +7,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface StatService {
-    HitDto saveForStatistic(HitDto dto);
+    HitDto send(HitDto dto);
 
-    List<ViewStatsDto> getStatistic(
+    List<ViewStatsDto> receive(
             LocalDateTime start,
             LocalDateTime end,
             String[] uris,

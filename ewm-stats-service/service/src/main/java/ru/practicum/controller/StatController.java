@@ -24,8 +24,9 @@ public class StatController {
 
     @PostMapping("/hit")
     @ResponseStatus(HttpStatus.CREATED)
-    public void send(@RequestBody HitDto dto) {
-        service.saveForStatistic(dto);
+    public HitDto send(@RequestBody HitDto dto) {
+
+        return service.send(dto);
     }
 
     @GetMapping("/stats")
@@ -35,6 +36,6 @@ public class StatController {
             @RequestParam(required = false) String[] uris,
             @RequestParam(defaultValue = "false") Boolean unique) {
 
-        return service.getStatistic(start, end, uris, unique);
+        return service.receive(start, end, uris, unique);
     }
 }

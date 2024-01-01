@@ -40,6 +40,7 @@ public class StatMapper {
     }
 
     public ViewStatsDto toViewStatsDto(ViewStats statisticData) {
+
         return ViewStatsDto.builder()
                 .app(statisticData.getApp())
                 .uri(statisticData.getUri())

@@ -22,14 +22,14 @@ public class StatServiceImpl implements StatService {
     private final StatRepository repository;
     private final StatMapper mapper;
 
-    public HitDto saveForStatistic(HitDto dto) {
+    public HitDto send(HitDto dto) {
         log.info("[i] saveForStatistic \n dto = {}", dto);
         Stat entity = mapper.toEntity(dto);
 
         return mapper.toHitDto(repository.save(entity));
     }
 
-    public List<ViewStatsDto> getStatistic(
+    public List<ViewStatsDto> receive(
             LocalDateTime start,
             LocalDateTime end,
             String[] uris,
@@ -51,6 +51,8 @@ public class StatServiceImpl implements StatService {
                 showStatsFromDb = repository.getByCreatedBetweenAndUriIn(start, end, uris);
             }
         }
-        return showStatsFromDb.stream().map(mapper::toViewStatsDto).collect(toList());
+        return showStatsFromDb.stream()
+                .map(mapper::toViewStatsDto)
+                .collect(toList());
     }
 }
