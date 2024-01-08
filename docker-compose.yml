@@ -1,15 +1,32 @@
 version: '3.1'
 services:
   stats-server:
+    build: ewm-stats-service/service
+    container_name: stats-server
+    depends_on:
+      - stats-db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/stats_db
+    env_file:
+      - "pass.env"
     ports:
       - "9090:9090"
 
   stats-db:
     image: postgres:14-alpine
+    container_name: stats-db
+    environment:
+      - POSTGRES_DB=stats_db
+    env_file:
+      - "pass.env"
+    ports:
+      - "6541:5432"
 
   ewm-service:
+    build: ewm-main-service
+    container_name: emw-service
     ports:
       - "8080:8080"
 
-  ewm-db:
-    image: postgres:14-alpine
+#  ewm-db:
+#    image: postgres:14-alpine
