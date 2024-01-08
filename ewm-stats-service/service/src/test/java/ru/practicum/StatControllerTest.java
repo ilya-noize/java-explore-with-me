@@ -11,6 +11,7 @@ import ru.practicum.controller.StatController;
 import ru.practicum.service.StatService;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -39,6 +40,8 @@ class StatControllerTest {
     private final LocalDateTime timestamp =
             LocalDateTime.of(2022, 9, 6, 11, 0, 23);
     private final HitDto hitDto = new HitDto(1L, app, uri, ip, timestamp);
+    private final String pattern = "yyyy-MM-dd HH:mm:ss";
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
 
     @Test
     void send() throws Exception {
@@ -56,7 +59,7 @@ class StatControllerTest {
                 .andExpect(jsonPath("$.app").value(app))
                 .andExpect(jsonPath("$.uri").value(uri))
                 .andExpect(jsonPath("$.ip").value(ip))
-                .andExpect(jsonPath("$.timestamp").value(timestamp));
+                .andExpect(jsonPath("$.timestamp").value(timestamp.format(formatter)));
     }
 
     @Test

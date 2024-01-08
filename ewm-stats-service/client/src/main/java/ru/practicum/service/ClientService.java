@@ -19,8 +19,8 @@ import java.util.Map;
 
 @Service
 public class ClientService extends Client {
-    public static final String PATTERN = "yyyy-MM-dd HH:mm:ss";
     private static final String API_PREFIX = "/";
+    public static final String PATTERN = "yyyy-MM-dd HH:mm:ss";
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(PATTERN);
 
     @Autowired
