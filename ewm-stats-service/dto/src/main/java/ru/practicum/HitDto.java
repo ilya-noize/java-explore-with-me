@@ -2,10 +2,14 @@ package ru.practicum;
 
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+
 
 /**
  * <h3>Сохраняет данные о запросе по URL из App-приложения c IP-адреса пользователя в момент времени</h3>
@@ -26,5 +30,6 @@ public class HitDto {
     private String app;
     private String uri;
     private String ip;
-    private String timestamp;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime timestamp;
 }

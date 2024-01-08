@@ -1,9 +1,7 @@
 package ru.practicum.client;
 
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.web.client.HttpStatusCodeException;
@@ -18,7 +16,6 @@ import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpMethod.POST;
 
 public class Client {
-    public static final String HEADER = "X-Sharer-User-Id";
     protected final RestTemplate rest;
 
     public Client(RestTemplate rest) {
@@ -50,7 +47,8 @@ public class Client {
             @Nullable T body,
             K response) {
 
-        HttpEntity<T> requestEntity = new HttpEntity<>(body, defaultHeaders(null));
+        assert body != null;
+        HttpEntity<T> requestEntity = new HttpEntity<>(body);
         Class kClass = response.getClass();
         ResponseEntity<K> shareitServerResponse;
         try {
@@ -74,16 +72,6 @@ public class Client {
                     .body(e.getResponseBodyAsByteArray());
         }
         return prepareGatewayResponse(shareitServerResponse);
-    }
-
-    private HttpHeaders defaultHeaders(Long id) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-        if (id != null) {
-            headers.set(HEADER, String.valueOf(id));
-        }
-        return headers;
     }
 
     private static <T> ResponseEntity<T> prepareGatewayResponse(ResponseEntity<T> response) {

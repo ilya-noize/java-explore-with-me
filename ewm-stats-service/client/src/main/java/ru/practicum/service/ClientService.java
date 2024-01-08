@@ -6,7 +6,6 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import ru.practicum.HitDto;
 import ru.practicum.ViewStatsDto;
@@ -22,6 +21,7 @@ import java.util.Map;
 public class ClientService extends Client {
     public static final String PATTERN = "yyyy-MM-dd HH:mm:ss";
     private static final String API_PREFIX = "/";
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(PATTERN);
 
     @Autowired
     public ClientService(@Value("${stats-server.url}") String serverUrl, RestTemplateBuilder builder) {
@@ -31,17 +31,16 @@ public class ClientService extends Client {
                 .build());
     }
 
-    public HitDto post(@RequestBody HitDto dto) {
+    public HitDto post(HitDto dto) {
         ResponseEntity<HitDto> responseEntity = this.post(dto, new HitDto());
         return responseEntity.getBody();
     }
 
     public List<ViewStatsDto> get(LocalDateTime start, LocalDateTime end, String[] uris, String unique) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(PATTERN);
         Map<String, Object> map = Map.of(
-                "start", start.format(formatter),
-                "end", end.format(formatter),
-                "uris", uris,
+                "start", start.format(FORMATTER),
+                "end", end.format(FORMATTER),
+                "uris", String.join(",", uris),
                 "unique", unique
 
         );
