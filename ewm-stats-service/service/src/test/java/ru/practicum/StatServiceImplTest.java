@@ -22,12 +22,16 @@ class StatServiceImplTest {
     private final String app = "ewm-main-service";
     private final String uri = "/main";
     private final String ip = "192.163.0.1";
+    private final LocalDateTime[] timestamps = {
+            LocalDateTime.of(2020, 6, 1, 11, 0, 1),
+            LocalDateTime.of(2020, 6, 1, 11, 11, 11),
+            LocalDateTime.of(2020, 6, 1, 11, 59, 59)
+    };
 
     @Test
     void saveEndpoint() {
-        String timestamp = "2020-06-01 11:00:01";
-
-        HitDto response = service.send(new HitDto(0L, app, uri, ip, timestamp));
+        HitDto request = new HitDto(0L, app, uri, ip, timestamps[0]);
+        HitDto response = service.send(request);
 
         assertNotEquals(0L, response.getId());
     }
@@ -36,9 +40,9 @@ class StatServiceImplTest {
     void getStatistic() {
         String ip2 = "192.163.0.2";
 
-        service.send(new HitDto(2L, app, uri, ip, "2020-06-01 11:00:01"));
-        service.send(new HitDto(3L, app, uri, ip, "2020-06-01 11:11:11"));
-        service.send(new HitDto(4L, app, uri, ip2, "2020-06-01 11:59:59"));
+        service.send(new HitDto(2L, app, uri, ip, timestamps[0]));
+        service.send(new HitDto(3L, app, uri, ip, timestamps[1]));
+        service.send(new HitDto(4L, app, uri, ip2, timestamps[2]));
 
         LocalDateTime start = LocalDateTime.of(2020, 6, 1, 10, 0, 0);
         LocalDateTime end = start.plusHours(2);

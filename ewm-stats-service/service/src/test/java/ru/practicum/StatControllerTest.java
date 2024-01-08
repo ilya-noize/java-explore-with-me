@@ -10,6 +10,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.controller.StatController;
 import ru.practicum.service.StatService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -35,7 +36,8 @@ class StatControllerTest {
     private final String app = "ewm-main-service";
     private final String uri = "/main";
     private final String ip = "192.163.0.1";
-    private final String timestamp = "2022-09-06 11:00:23";
+    private final LocalDateTime timestamp =
+            LocalDateTime.of(2022, 9, 6, 11, 0, 23);
     private final HitDto hitDto = new HitDto(1L, app, uri, ip, timestamp);
 
     @Test
