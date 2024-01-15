@@ -9,7 +9,7 @@ public interface Controller<T, T1> {
 
     T get(Long id);
 
-    List<T> getAll();
+    List<T> getAll(Integer from, Integer size);
 
     void remove(Long id);
 }
