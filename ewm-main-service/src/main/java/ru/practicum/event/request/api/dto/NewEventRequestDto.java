@@ -1,4 +1,4 @@
-package ru.practicum.event.request.dto;
+package ru.practicum.event.request.api.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,7 +13,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class NewEventRequestDto {
     private Long eventId;
-    private Long organizerId;
+    private Long initializerId;
     private Long visitorId;
     private boolean request;
 }

@@ -1,4 +1,4 @@
-package ru.practicum.event.dto;
+package ru.practicum.event.api.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDateTime;
@@ -10,8 +10,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import ru.practicum.category.dto.CategoryDto;
-import ru.practicum.user.dto.UserShortDto;
+import ru.practicum.category.api.dto.CategoryDto;
+import ru.practicum.user.api.dto.UserShortDto;
 
 import static prototype.Constants.DATE_FORMAT;
 

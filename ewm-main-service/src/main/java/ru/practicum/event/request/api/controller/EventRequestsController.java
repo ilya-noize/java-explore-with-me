@@ -1,8 +1,4 @@
-package ru.practicum.event.request.controller;
-
-import java.util.List;
-import javax.validation.Valid;
-import javax.validation.constraints.Min;
+package ru.practicum.event.request.api.controller;
 
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,27 +7,30 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import prototype.Controller;
-import ru.practicum.event.request.dto.NewEventRequestDto;
-import ru.practicum.event.request.dto.ParticipationRequestDto;
+import ru.practicum.event.request.api.dto.NewEventRequestDto;
+import ru.practicum.event.request.api.dto.ParticipationRequestDto;
+
+import javax.validation.Valid;
+import javax.validation.constraints.Min;
+import java.util.List;
 
 @RestController
 @Validated
-public class EventRequestsController implements Controller<ParticipationRequestDto, NewEventRequestDto> {
+public class EventRequestsController {
 
     public ParticipationRequestDto create(@RequestBody @Valid NewEventRequestDto newDto) {
-        return this.update(newDto.getEventId(), newDto);
+        return null;
     }
 
     public ParticipationRequestDto update(Long id, NewEventRequestDto newDto) {
-        return this.update(newDto.getOrganizerId(), newDto.getEventId(), newDto);
+        return null;
     }
 
     @PatchMapping({"/users/{userId}/events/{id}/requests"})
     public ParticipationRequestDto update(@PathVariable Long userId,
                                           @PathVariable Long id,
                                           @RequestBody @Valid NewEventRequestDto dto) {
-        dto.setOrganizerId(userId);
+        dto.setInitializerId(userId);
         dto.setEventId(id);
         return null;
     }
