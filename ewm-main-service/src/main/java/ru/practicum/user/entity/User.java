@@ -4,7 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import prototype.Constants;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -21,6 +23,7 @@ public class User {
             strategy = GenerationType.IDENTITY
     )
     private Long id;
-    private String email;
+    private @Column(unique = true) String email;
     private String name;
+    private @Column(length = 10) Constants.UserGroup userGroup;
 }
