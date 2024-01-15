@@ -6,9 +6,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.practicum.category.api.dto.CategoryDto;
 import ru.practicum.category.api.dto.NewCategoryDto;
-import ru.practicum.category.entity.Category;
 import ru.practicum.category.api.mapper.CategoryMapper;
 import ru.practicum.category.api.repository.CategoryRepository;
+import ru.practicum.category.entity.Category;
 import ru.practicum.event.api.repository.EventRepository;
 import ru.practicum.exception.ForbiddenException;
 import ru.practicum.exception.NotFoundException;
@@ -63,10 +63,10 @@ public class CategoryService {
     }
 
     public void remove(Long id) {
-        if(eventRepository.countByCategory_Id(id) > 0) {
+        if (eventRepository.countByCategory_Id(id) > 0) {
             throw new ForbiddenException("There are events in the category.");
         }
-        if(categoryRepository.removeById(id) == 0) {
+        if (categoryRepository.removeById(id) == 0) {
             throw new NotFoundException(format(CATEGORY_NOT_EXISTS, id));
         }
         log.debug("[i][admin] The category (ID:{}) was successfully deleted.", id);

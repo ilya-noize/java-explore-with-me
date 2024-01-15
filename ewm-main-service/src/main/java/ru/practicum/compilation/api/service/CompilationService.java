@@ -6,9 +6,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.practicum.compilation.api.dto.CompilationDto;
 import ru.practicum.compilation.api.dto.NewCompilationDto;
-import ru.practicum.compilation.entity.Compilation;
 import ru.practicum.compilation.api.mapper.CompilationMapper;
 import ru.practicum.compilation.api.repository.CompilationRepository;
+import ru.practicum.compilation.entity.Compilation;
 import ru.practicum.event.api.repository.EventRepository;
 import ru.practicum.event.entity.Event;
 import ru.practicum.exception.BadRequestException;
@@ -93,7 +93,7 @@ public class CompilationService {
     }
 
     public void remove(Long id) {
-        if(repository.removeById(id) == 0) {
+        if (repository.removeById(id) == 0) {
             throw new NotFoundException(format(COMPILATION_NOT_EXISTS, id));
         }
         log.debug("[i][admin] The compilation (ID:{}) was successfully deleted.", id);
