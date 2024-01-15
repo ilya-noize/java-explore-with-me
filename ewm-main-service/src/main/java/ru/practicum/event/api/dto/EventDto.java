@@ -1,20 +1,20 @@
 package ru.practicum.event.api.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.PositiveOrZero;
-import javax.validation.constraints.Size;
 import jdk.jfr.BooleanFlag;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import prototype.Constants;
 import ru.practicum.category.api.dto.CategoryDto;
+import ru.practicum.event.api.service.EventService;
 import ru.practicum.location.entity.Location;
 import ru.practicum.user.api.dto.UserShortDto;
+
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.PositiveOrZero;
+import java.time.LocalDateTime;
 
 import static prototype.Constants.DATE_FORMAT;
 
@@ -26,16 +26,9 @@ import static prototype.Constants.DATE_FORMAT;
 @AllArgsConstructor
 public class EventDto {
     private long id;
-    private @NotNull @Size(
-            max = 256
-    ) String title;
-    private @NotNull @Size(
-            max = 512,
-            min = 64
-    ) String annotation;
-    private @Size(
-            max = 2048
-    ) String description;
+    private @NotNull String title;
+    private @NotNull String annotation;
+    private String description;
     private @NotNull CategoryDto category;
     private @NotNull UserShortDto initiator;
     private @NotNull Location location;
@@ -57,6 +50,6 @@ public class EventDto {
     private @PositiveOrZero int participantLimit;
     @BooleanFlag
     private boolean requestModeration;
-    private Constants.EventState state;
+    private EventService.EventState state;
     private long views;
 }

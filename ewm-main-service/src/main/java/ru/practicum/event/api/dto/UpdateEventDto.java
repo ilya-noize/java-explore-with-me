@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import ru.practicum.event.api.service.EventService;
 import ru.practicum.location.entity.Location;
 
 import javax.validation.constraints.NotNull;
@@ -27,6 +28,7 @@ import static prototype.Constants.DATE_FORMAT;
  * {@link #eventDate}           Дата и время на которые намечено событие. <br/>
  * {@link #participantLimit}    Ограничение на количество участников. 0 (default) - означает отсутствие ограничения <br/>
  * {@link #requestModeration}   Нужна ли пре-модерация заявок на участие (true(default) - manual, false - auto). <br/>
+ * {@link #stateAction}         Изменение состояния события
  */
 
 @Getter
@@ -34,7 +36,7 @@ import static prototype.Constants.DATE_FORMAT;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class NewEventDto {
+public class UpdateEventDto {
     private @NotNull @Size(
             max = 120,
             min = 3
@@ -58,4 +60,5 @@ public class NewEventDto {
     private @PositiveOrZero Integer participantLimit;
     @BooleanFlag
     private Boolean requestModeration;
+    private EventService.StateAction stateAction;
 }

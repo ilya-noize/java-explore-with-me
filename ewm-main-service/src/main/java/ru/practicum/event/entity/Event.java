@@ -7,8 +7,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import prototype.Constants;
 import ru.practicum.category.entity.Category;
+import ru.practicum.event.api.service.EventService;
 import ru.practicum.location.entity.Location;
 import ru.practicum.user.entity.User;
 
@@ -75,6 +75,6 @@ public class Event {
     private @PositiveOrZero int participantLimit;
     @BooleanFlag
     private boolean requestModeration;
-    private Constants.EventState state;
+    private EventService.EventState state;
     private long views;
 }

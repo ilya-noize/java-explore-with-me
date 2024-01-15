@@ -1,57 +1,174 @@
 package ru.practicum.event.api.service;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import ru.practicum.event.api.dto.EventDto;
 import ru.practicum.event.api.dto.EventShortDto;
 import ru.practicum.event.api.dto.NewEventDto;
-import ru.practicum.event.api.mapper.EventMapper;
-import ru.practicum.event.api.repository.EventRepository;
-import ru.practicum.event.entity.Event;
-import ru.practicum.exception.BadRequestException;
-import ru.practicum.user.api.repository.UserRepository;
-import ru.practicum.user.entity.User;
+import ru.practicum.event.api.dto.UpdateEventAdminDto;
+import ru.practicum.event.api.dto.UpdateEventDto;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
-import static prototype.Constants.USER_NOT_EXISTS;
-
-@Service
-@RequiredArgsConstructor
-public class EventService {
-    private final EventRepository eventRepository;
-    private final UserRepository userRepository;
-
-    public EventDto create(long userId, NewEventDto newEventDto) {
-        User initiator = isExistUserById(userId);
-        Event event = EventMapper.INSTANCE.toEntity(newEventDto, initiator);
-        return EventMapper.INSTANCE.toDto(
-                eventRepository.save(event));
+public interface EventService {
+    /**
+     * Состояние события
+     */
+    enum EventState {
+        PENDING,
+        PUBLISHED,
+        CANCELED
     }
 
-    private User isExistUserById(long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new BadRequestException(
-                        String.format(USER_NOT_EXISTS, id)));
+    /**
+     * Сортировка событий в поиске
+     */
+    enum EventSortState {
+        EVENT_DATE,
+        VIEWS
     }
 
-    public EventDto update(Long id, EventShortDto eventShortDto) {
-        return null;
+    /**
+     * Состояние события при обновлении
+     */
+    enum StateAction {
+        SEND_TO_REVIEW,
+        CANCEL_REVIEW
     }
 
-    public EventDto getById(Long id) {
-        return null;
-    }
+    EventDto create(long userId, NewEventDto newEventDto);
 
-    public List<EventDto> getByInitializer(Long userId) {
-        return null;
-    }
+    /**
+     * PRIVATE
+     *
+     * @param userId ID user
+     * @param from   Pageable
+     * @param size   Pageable
+     * @return List DTO events
+     */
+    List<EventDto> getByInitializer(Long userId, Integer from, Integer size);
 
-    public List<EventDto> getByInitializerAndId(Long userId, Long id) {
-        return null;
-    }
+    /**
+     * PRIVATE
+     *
+     * @param userId  ID user
+     * @param eventId ID event
+     * @return DTO Event
+     */
+    EventDto getByInitializerAndId(Long userId, Long eventId);
 
-    public List<EventDto> getAll(Integer from, Integer size) {
-        return null;
-    }
+    /**
+     * PRIVATE
+     * <p>
+     * Обратите внимание:
+     * - изменить можно только отмененные события или события в состоянии ожидания модерации (Ожидается код ошибки 409)
+     * - дата и время на которые намечено событие не может быть раньше, чем через два часа от текущего момента (Ожидается код ошибки 409)
+     *
+     * @param userId         ID user
+     * @param eventId        ID event
+     * @param updateEventDto update event
+     * @return DTO event
+     */
+    EventDto updateByInitializerAndId(Long userId, Long eventId, UpdateEventDto updateEventDto);
+
+    /**
+     * PRIVATE
+     *
+     * @param userId  ID user
+     * @param eventId ID event
+     * @return List DTO events
+     */
+    List<EventDto> getRequestsInEvent(Long userId, Long eventId);
+
+    /**
+     * PRIVATE
+     * <p>     * Обратите внимание:
+     * <ul>
+     *     <li>если для события лимит заявок равен 0 или отключена пре-модерация заявок, то подтверждение заявок не требуется</li>
+     *     <li>нельзя подтвердить заявку, если уже достигнут лимит по заявкам на данное событие (Ожидается код ошибки 409)</li>
+     *     <li>статус можно изменить только у заявок, находящихся в состоянии ожидания (Ожидается код ошибки 409)</li>
+     *     <li>если при подтверждении данной заявки, лимит заявок для события исчерпан, то все неподтверждённые заявки необходимо отклонить</li>
+     * </ul>
+     *
+     * @param userId  ID user
+     * @param eventId ID event
+     * @return List DTO events
+     */
+    List<EventDto> updateRequestsInEvent(Long userId, Long eventId);
+
+    /**
+     * ADMIN
+     * <p>
+     * Редактирование данных любого события администратором. Валидация данных не требуется. Обратите внимание:
+     * дата начала изменяемого события должна быть не ранее чем за час от даты публикации. (Ожидается код ошибки 409)
+     * событие можно публиковать, только если оно в состоянии ожидания публикации (Ожидается код ошибки 409)
+     * событие можно отклонить, только если оно еще не опубликовано (Ожидается код ошибки 409)
+     * @param eventId   ID event
+     * @param updateEventAdminDto   update event
+     * @return  DTO event
+     */
+    EventDto eventAdministration(Long eventId, UpdateEventAdminDto updateEventAdminDto);
+
+    /**
+     * ADMIN
+     *
+     * @param users         List ID users
+     * @param states        List events state
+     * @param categories    List ID categories
+     * @param rangeStart    start Date
+     * @param rangeEnd      finish Date
+     * @param from          From page
+     * @param size          Pages
+     * @return  List DTO events
+     */
+    List<EventDto> getEventsAdministration(
+            List<Long> users,
+            List<String> states,
+            List<Long> categories,
+            LocalDateTime rangeStart,
+            LocalDateTime rangeEnd,
+            Integer from,
+            Integer size);
+
+    /**
+     * PUBLIC
+     * <p>     * Получение событий с возможностью фильтрации
+     *
+     * @param text          Поиск строки в названии, описании, анонсе
+     * @param categories    ID Категории события
+     * @param paid          Free or Pay
+     * @param rangeStart    Начальный момент времени
+     * @param rangeEnd      Конечный момент времени
+     * @param onlyAvailable Доступные/Закрытые
+     * @param sort          Сортировка по Дате или Просмотрам
+     * @param from          From page
+     * @param size          Pages
+     * @return List DTO Events
+     */
+    List<EventShortDto> getAll(
+            String text,
+            List<Long> categories,
+            Boolean paid,
+            LocalDateTime rangeStart,
+            LocalDateTime rangeEnd,
+            Boolean onlyAvailable,
+            String sort,
+            Integer from,
+            Integer size);
+
+
+    /**
+     * PUBLIC
+     * <p>      * Получение подробной информации об опубликованном событии по его идентификатору
+     * <p>Обратите внимание:
+     * <ul>
+     *     <li>событие должно быть опубликовано</li>
+     *     <li>информация о событии должна включать в себя количество просмотров и количество подтвержденных запросов</li>
+     *     <li>информацию о том, что по этому эндпоинту был осуществлен и обработан запрос, нужно сохранить в сервисе статистики</li>
+     * </ul>
+     *
+     * В случае, если события с заданным id не найдено, возвращает статус код 404
+     * @param eventId ID event
+     * @return  DTO Event
+     */
+    EventDto get(Long eventId);
 }
