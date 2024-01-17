@@ -1,6 +1,7 @@
 package ru.practicum.event.api.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +16,7 @@ import javax.validation.constraints.Min;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static prototype.Constants.DATE_FORMAT;
 import static prototype.Constants.FROM;
 import static prototype.Constants.SIZE;
 
@@ -38,7 +40,8 @@ public class EventAdminController extends EventController {
      * @return  DTo event
      */
     @PatchMapping({"/admin/events/{eventId}"})
-    public EventDto update(@PathVariable Long eventId, @RequestBody @Valid UpdateEventAdminDto updateEventAdminDto) {
+    public EventDto eventAdministration(@PathVariable Long eventId,
+                                        @RequestBody @Valid UpdateEventAdminDto updateEventAdminDto) {
         log.debug("[i][admin] update event ID:{}", eventId);
 
         return service.eventAdministration(eventId, updateEventAdminDto);
@@ -58,12 +61,12 @@ public class EventAdminController extends EventController {
      * @return  List DTO events
      */
     @GetMapping({"/admin/events"})
-    public List<EventDto> getAll(
-            @RequestParam List<Long> users,
-            @RequestParam List<String> states,
-            @RequestParam List<Long> categories,
-            @RequestParam LocalDateTime rangeStart,
-            @RequestParam LocalDateTime rangeEnd,
+    public List<EventDto> getEventsAdministration(
+            @RequestParam(required = false) List<Long> users,
+            @RequestParam(required = false) List<String> states,
+            @RequestParam(required = false) List<Long> categories,
+            @RequestParam(required = false) @DateTimeFormat(pattern = DATE_FORMAT) LocalDateTime rangeStart,
+            @RequestParam(required = false) @DateTimeFormat(pattern = DATE_FORMAT) LocalDateTime rangeEnd,
             @RequestParam(required = false, defaultValue = FROM) @Min(0) Integer from,
             @RequestParam(required = false, defaultValue = SIZE) @Min(1) Integer size) {
         log.debug("[i] events Administration\n" +

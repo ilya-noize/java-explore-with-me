@@ -2,8 +2,13 @@ package ru.practicum.event.api.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.EnumUtils;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import prototype.Constants.StateAdminAction;
+import ru.practicum.category.api.repository.CategoryRepository;
+import ru.practicum.category.entity.Category;
 import ru.practicum.event.api.dto.EventDto;
 import ru.practicum.event.api.dto.EventShortDto;
 import ru.practicum.event.api.dto.NewEventDto;
@@ -11,17 +16,37 @@ import ru.practicum.event.api.dto.UpdateEventAdminDto;
 import ru.practicum.event.api.dto.UpdateEventDto;
 import ru.practicum.event.api.mapper.EventMapper;
 import ru.practicum.event.api.repository.EventRepository;
+import ru.practicum.event.api.repository.specs.EventSpecification;
+import ru.practicum.event.api.repository.specs.SearchCriteria;
+import ru.practicum.event.api.repository.specs.SearchOperation;
 import ru.practicum.event.entity.Event;
+import ru.practicum.event.request.api.dto.EventRequestDto;
+import ru.practicum.event.request.api.dto.EventRequestStatusUpdateRequest;
+import ru.practicum.event.request.api.dto.EventRequestStatusUpdateResult;
+import ru.practicum.event.request.api.mapper.EventRequestMapper;
+import ru.practicum.event.request.api.repository.EventRequestRepository;
+import ru.practicum.event.request.entity.EventRequest;
 import ru.practicum.exception.BadRequestException;
+import ru.practicum.exception.ConflictException;
+import ru.practicum.exception.ForbiddenException;
 import ru.practicum.exception.NotFoundException;
+import ru.practicum.location.entity.Location;
+import ru.practicum.location.repository.LocationRepository;
+import ru.practicum.service.ClientService;
 import ru.practicum.user.api.repository.UserRepository;
 import ru.practicum.user.entity.User;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import static java.lang.String.format;
+import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toList;
+import static prototype.Constants.CATEGORY_NOT_EXISTS;
 import static prototype.Constants.EVENT_NOT_EXISTS;
+import static prototype.Constants.RequestState;
+import static prototype.Constants.StateAdminAction.PUBLISH_EVENT;
 import static prototype.Constants.USER_NOT_EXISTS;
 import static prototype.Constants.checkPageable;
 
@@ -29,36 +54,44 @@ import static prototype.Constants.checkPageable;
 @Slf4j
 @RequiredArgsConstructor
 public class EventServiceImpl implements EventService {
+
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
-
-    private User isExistUserById(long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() ->
-                        new BadRequestException(
-                                format(USER_NOT_EXISTS, id)
-                        )
-                );
-    }
+    private final CategoryRepository categoryRepository;
+    private final EventRequestRepository requestRepository;
+    private final LocationRepository locationRepository;
+    private final ClientService statistic;
 
     @Override
     public EventDto create(long userId, NewEventDto newEventDto) {
         // 400
         // 409 - Событие не удовлетворяет правилам создания
-        User initiator = isExistUserById(userId);
-        Event event = EventMapper.INSTANCE.toEntity(newEventDto, initiator);
+        User initiator = getUser(userId);
+        validateEventDate(newEventDto.getEventDate());
+        Event event = EventMapper.INSTANCE
+                .toEntity(newEventDto,
+                        initiator,
+                        LocalDateTime.now(),
+                        EventState.PENDING);
         return EventMapper.INSTANCE.toDto(
                 eventRepository.save(event));
     }
 
     @Override
-    public List<EventDto> getByInitializer(Long userId, Integer from, Integer size) {
-        return null;
+    public List<EventShortDto> getByInitializer(Long userId, Integer from, Integer size) {
+        Pageable pageable = checkPageable(from, size, null);
+        User initiator = getUser(userId);
+        List<Event> events = eventRepository.getByInitiator(initiator, pageable)
+                .orElse(emptyList());
+
+        return events.stream()
+                .map(EventMapper.INSTANCE::toShortDto)
+                .collect(toList());
     }
 
     @Override
     public EventDto getByInitializerAndId(Long userId, Long eventId) {
-        User initiator = isExistUserById(userId);
+        User initiator = getUser(userId);
         Event event = eventRepository.getByInitiatorAndId(initiator, eventId)
                 .orElseThrow(() ->
                         new NotFoundException(format(EVENT_NOT_EXISTS, eventId)));
@@ -67,30 +100,124 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public EventDto updateByInitializerAndId(Long userId, Long eventId, UpdateEventDto updateEventDto) {
+    public EventDto updateByInitializerAndId(Long userId, Long eventId, UpdateEventDto dto) {
         //400 - request error
         //404 - not fount event
         //409 - Событие не удовлетворяет правилам редактирования: only pending or cancelled
-        return null;
+        User initiator = getUser(userId);
+        Event event = eventRepository.getByInitiatorAndId(initiator, eventId)
+                .orElseThrow(() -> new NotFoundException(EVENT_NOT_EXISTS));
+        EventState eventState = event.getState();
+        if (eventState.equals(EventState.PUBLISHED)) {
+            throw new ForbiddenException(format("Wrong event state: %s", eventState));
+        }
+
+        LocalDateTime newEventDate = dto.getEventDate();
+        if (newEventDate != null) {
+            validateEventDate(newEventDate);
+            event.setEventDate(newEventDate);
+        }
+
+        updateTitleAnnotationDescriptionCategoryLocationPaidParticipantLimitModeration(event,
+                dto.getTitle(),
+                dto.getAnnotation(),
+                dto.getDescription(),
+                dto.getCategory(),
+                getLocation(dto.getLocation()),
+                dto.getPaid(),
+                dto.getParticipantLimit(),
+                dto.getRequestModeration()
+        );
+
+        StateAction stateAction = dto.getStateAction();
+        if (stateAction != null) {
+            switch (stateAction) {
+                case SEND_TO_REVIEW:
+                    event.setState(EventState.PENDING);
+                    break;
+                case CANCEL_REVIEW:
+                    event.setState(EventState.CANCELED);
+                    break;
+            }
+        }
+
+        return EventMapper.INSTANCE.toDto(eventRepository.save(event));
     }
 
     @Override
-    public List<EventDto> getRequestsInEvent(Long userId, Long eventId) {
+    public List<EventRequestDto> getRequestsInEvent(Long userId, Long eventId) {
         //400 - request error
-        return null;
+        isExistsUserLikeInitiatorEvent(userId, eventId);
+        return requestRepository.getByEvent_Id(eventId).stream()
+                .map(EventRequestMapper.INSTANCE::toDto)
+                .collect(toList());
     }
 
     @Override
-    public List<EventDto> updateRequestsInEvent(Long userId, Long eventId) {
+    public EventRequestStatusUpdateResult updateRequestsInEvent(
+            Long userId,
+            Long eventId,
+            EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest) {
         //400 - request error
         //404 - not fount event
         //409 - Достигнут лимит одобренных заявок
-        return null;
+        isExistsUser(userId);
+        Event event = getEvent(eventId);
+        validateConfirmation(event);
+        List<Long> requestIds = eventRequestStatusUpdateRequest.getRequestIds();
+        List<EventRequest> requests = requestRepository.findAllById(requestIds);
+        long limit = requestRepository.countByEvent_IdAndStatus(eventId, RequestState.CONFIRMED);
+        int participantLimit = event.getParticipantLimit();
+        validateLimitRequests(participantLimit, limit);
+
+        EventRequestStatusUpdateResult statusUpdateResponse = new EventRequestStatusUpdateResult();
+        RequestState updateStatus = eventRequestStatusUpdateRequest.getStatus();
+        for (EventRequest request : requests) {
+            validateRequestStatus(request.getStatus());
+            if (updateStatus.equals(RequestState.CONFIRMED)) {
+                if (limit < participantLimit) {
+                    request.setStatus(RequestState.CONFIRMED);
+                    limit++;
+                } else {
+                    request.setStatus(RequestState.REJECTED);
+                }
+            } else {
+                request.setStatus(RequestState.REJECTED);
+            }
+            statusUpdateResponse.getConfirmedRequests().add(EventRequestMapper.INSTANCE.toDto(request));
+        }
+        requestRepository.saveAll(requests);
+        return statusUpdateResponse;
     }
 
     @Override
-    public EventDto eventAdministration(Long eventId, UpdateEventAdminDto updateEventAdminDto) {
-        return null;
+    public EventDto eventAdministration(Long eventId, UpdateEventAdminDto dto) {
+        Event event = getEvent(eventId);
+        LocalDateTime eventDate = event.getEventDate();
+        validateAdminTimeMoment(eventDate);
+
+        LocalDateTime newEventDate = dto.getEventDate();
+        validateAdminTimeMoment(newEventDate);
+
+        String stateAction = dto.getStateAction();
+        EventState eventState = event.getState();
+        EventState newEventState = getValidAdminEventState(
+                StateAdminAction.getInstance(stateAction), eventState);
+        event.setState(stateAction != null ? newEventState : event.getState());
+        if (event.getState().equals(EventState.PUBLISHED)) {
+            event.setPublishedOn(LocalDateTime.now());
+        }
+        updateTitleAnnotationDescriptionCategoryLocationPaidParticipantLimitModeration(event,
+                dto.getTitle(),
+                dto.getAnnotation(),
+                dto.getDescription(),
+                dto.getCategory(),
+                getLocation(dto.getLocation()),
+                dto.getPaid(),
+                dto.getParticipantLimit(),
+                dto.getRequestModeration());
+
+        return EventMapper.INSTANCE.toDto(eventRepository.save(event));
     }
 
     @Override
@@ -99,12 +226,29 @@ public class EventServiceImpl implements EventService {
             List<String> states,
             List<Long> categories,
             LocalDateTime rangeStart,
-            LocalDateTime rangeEnd,
+            LocalDateTime rangeFinish,
             Integer from,
             Integer size) {
-        Pageable pageable = checkPageable(from, size);
+        validateRange(rangeStart, rangeFinish);
+        Pageable pageable = checkPageable(from, size, null);
+        EventSpecification eventSpecification = new EventSpecification();
 
-        return null;
+        eventSpecification.add(getCriteriaListUsers(users));
+        eventSpecification.add(getCriteriaListCategories(categories));
+        eventSpecification.add(getCriteriaStates(states));
+        eventSpecification.add(getCriteriaRangeStart(rangeStart));
+        eventSpecification.add(getCriteriaRangeFinish(rangeFinish));
+
+        List<Event> events;
+        if (eventSpecification.getList().isEmpty()) {
+            events = eventRepository.findAll(eventSpecification, pageable).toList();
+        } else {
+            events = eventRepository.findAll(pageable);
+        }
+
+        return events.stream()
+                .map(EventMapper.INSTANCE::toDto)
+                .collect(toList());
     }
 
     @Override
@@ -113,18 +257,290 @@ public class EventServiceImpl implements EventService {
             List<Long> categories,
             Boolean paid,
             LocalDateTime rangeStart,
-            LocalDateTime rangeEnd,
+            LocalDateTime rangeFinish,
             Boolean onlyAvailable,
             String sort,
             Integer from,
             Integer size) {
-        Pageable pageable = checkPageable(from, size);
 
+        Pageable pageable = checkPageable(from, size, getSort(sort));
+        validateRange(rangeStart, rangeFinish);
+        EventSpecification eventSpecification = new EventSpecification();
+        if (text != null) {
+            text = text.toUpperCase();
+            eventSpecification.add(getCriteriaTextInTitle(text));
+            eventSpecification.add(getCriteriaTextInAnnotation(text));
+            eventSpecification.add(getCriteriaTextInDescription(text));
+        }
+        eventSpecification.add(getCriteriaListCategories(categories));
+        eventSpecification.add(getCriteriaPaid(paid));
+        eventSpecification.add(getCriteriaRangeStart(rangeStart));
+        eventSpecification.add(getCriteriaRangeFinish(rangeFinish));
+        // todo stop
         return null;
     }
 
     @Override
     public EventDto get(Long eventId) {
+        // todo
+        Event event = getEvent(eventId);
+        if (!event.getState().equals(EventState.PUBLISHED)) {
+            throw new NotFoundException(format(EVENT_NOT_EXISTS,eventId));
+        }
+        int view = 0;
+        // todo stop
         return null;
+    }
+
+    private void updateTitleAnnotationDescriptionCategoryLocationPaidParticipantLimitModeration(
+            Event event,
+            String title,
+            String annotation,
+            String description,
+            Long categoryId,
+            Location location,
+            Boolean paid,
+            Integer participantLimit,
+            Boolean requestModeration) {
+        event.setTitle(title != null ? title : event.getTitle());
+        event.setAnnotation(annotation != null ? annotation : event.getAnnotation());
+        event.setDescription(description != null ? description : event.getDescription());
+        event.setLocation(location != null ? location : event.getLocation());
+        event.setPaid(paid != null ? paid : event.isPaid());
+        event.setCategory(categoryId != null ? getCategory(categoryId) : event.getCategory());
+        event.setParticipantLimit(participantLimit != null ? participantLimit : event.getParticipantLimit());
+        event.setRequestModeration(requestModeration != null ? requestModeration : event.isRequestModeration());
+    }
+
+    private void isExistsUser(long userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new BadRequestException(format(USER_NOT_EXISTS, userId));
+        }
+    }
+
+    private void isExistsEvent(Long eventId) {
+        if (!eventRepository.existsById(eventId)) {
+            throw new NotFoundException(format(EVENT_NOT_EXISTS, eventId));
+        }
+    }
+
+    private void isExistsUserLikeInitiatorEvent(long userId,
+                                                long eventId) {
+        isExistsUser(userId);
+        isExistsEvent(eventId);
+        if (!eventRepository.existsByIdAndInitiator_Id(eventId, userId)) {
+            throw new BadRequestException(format("Event with id:(%d) " +
+                    "and Initiator with id:(%d) not exist", eventId, userId));
+        }
+    }
+
+    private User getUser(long userId) {
+
+        return userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new BadRequestException(
+                                format(USER_NOT_EXISTS, userId)
+                        )
+                );
+    }
+
+    private Category getCategory(Long id) {
+
+        return categoryRepository.findById(id)
+                .orElseThrow(() ->
+                        new NotFoundException(format(CATEGORY_NOT_EXISTS, id)));
+    }
+
+    private Event getEvent(Long eventId) {
+        return eventRepository.findById(eventId)
+                .orElseThrow(() ->
+                        new NotFoundException(format(EVENT_NOT_EXISTS, eventId)));
+    }
+
+    private Location getLocation(Location location) {
+        if (location != null) {
+            double lat = location.getLat();
+            double lon = location.getLon();
+            return locationRepository.getByLatAndLon(lat, lon)
+                    .orElse(locationRepository.save(location));
+        }
+        return null;
+    }
+
+    private EventState getValidAdminEventState(StateAdminAction stateAction,
+                                               EventState eventState) {
+        String eventStateErrorMessage = "The event was moderated. " +
+                "Current status of the event: %s";
+        if (stateAction.equals(PUBLISH_EVENT)) {
+            if (eventState != EventState.PENDING) {
+                throw new ForbiddenException(format(eventStateErrorMessage, eventState));
+            }
+            return EventState.PUBLISHED;
+        } else {
+            if (eventState == EventState.PUBLISHED) {
+                throw new ForbiddenException(format(eventStateErrorMessage, eventState));
+            }
+            return EventState.CANCELED;
+        }
+    }
+
+    private Sort getSort(String sort) {
+        sort = sort.toUpperCase();
+        switch (EnumUtils.getEnum(EventSortState.class, sort)) {
+            case VIEWS:
+                return Sort.by("eventDate").descending();
+            case EVENT_DATE:
+                return Sort.by("views").descending();
+            default:
+                throw new BadRequestException("Wrong sorting parameters");
+        }
+    }
+
+    private void validateConfirmation(Event event) {
+        boolean isLimitlessRequests = event.getParticipantLimit() == 0;
+        boolean isNoPreModeration = !event.isRequestModeration();
+        if (isLimitlessRequests && isNoPreModeration) {
+            throw new ForbiddenException("Confirmation of applications is not required " +
+                    "for the event, the application limit is 0 " +
+                    "or the pre-moderation of applications is disabled ");
+        }
+    }
+
+    private void validateEventDate(LocalDateTime newEventDate) {
+        int minutesBeforeModifiedForInitiator = 120;
+        LocalDateTime timeLimit = LocalDateTime.now().plusMinutes(minutesBeforeModifiedForInitiator);
+        if (newEventDate.isBefore(timeLimit)) {
+            throw new ConflictException(format("Wrong event date: %td. " +
+                    "Time limit: %td", newEventDate, timeLimit));
+        }
+    }
+
+    private void validateLimitRequests(int participantLimit,
+                                       long limit) {
+        if (participantLimit == limit) {
+            throw new ForbiddenException("it is not possible to confirm the application " +
+                    "if the limit on applications for this event has already been reached");
+        }
+    }
+
+    private void validateRange(LocalDateTime rangeStart,
+                               LocalDateTime rangeFinish) {
+        String error;
+        if (rangeFinish != null) {
+            if (rangeFinish.isAfter(rangeStart)) {
+                if (rangeFinish.equals(rangeStart)) {
+                    error = format("Finish:%td equal Start:%td", rangeFinish, rangeStart);
+                    throw new BadRequestException(error);
+                }
+            } else {
+                error = format("Finish:%td before Start:%td", rangeFinish, rangeStart);
+                throw new BadRequestException(error);
+            }
+        } else {
+            error = "Finish is null";
+            throw new BadRequestException(error);
+        }
+    }
+
+    private void validateRequestStatus(RequestState status) {
+        if (!status.equals(RequestState.PENDING)) {
+            throw new ForbiddenException((format("Wrong request state: %s", status)));
+        }
+    }
+
+    private void validateAdminTimeMoment(LocalDateTime eventDate) {
+        String error;
+        if (eventDate == null) {
+            throw new ForbiddenException("eventDate is null");
+        }
+
+        int minutesBeforeModified = 60;
+        if (LocalDateTime.now()
+                .isBefore(eventDate.plusMinutes(minutesBeforeModified))) {
+            error = format("Event date (%td) not before %d minutes", eventDate, minutesBeforeModified);
+            throw new ForbiddenException(error);
+        }
+    }
+
+    private SearchCriteria getCriteriaListUsers(List<Long> users) {
+        if (users != null) {
+            return new SearchCriteria(
+                    "initiator",
+                    userRepository.findAllById(users),
+                    SearchOperation.IN
+            );
+        }
+        return null;
+    }
+
+    private SearchCriteria getCriteriaListCategories(List<Long> categories) {
+        if (categories != null) {
+            return new SearchCriteria(
+                    "category",
+                    categoryRepository.findAllById(categories),
+                    SearchOperation.IN
+            );
+        }
+        return null;
+    }
+
+    private SearchCriteria getCriteriaPaid(Boolean paid) {
+        if (paid != null) {
+
+            return new SearchCriteria("paid", paid, SearchOperation.EQUAL);
+        }
+
+        return null;
+    }
+
+    private SearchCriteria getCriteriaRangeStart(LocalDateTime rangeStart) {
+        if (rangeStart != null) {
+
+            return new SearchCriteria("eventDate", rangeStart, SearchOperation.GREATER_THAN_EQUAL);
+        }
+
+        return null;
+    }
+
+    private SearchCriteria getCriteriaRangeFinish(LocalDateTime rangeFinish) {
+        if (rangeFinish != null) {
+
+            return new SearchCriteria("eventDate", rangeFinish, SearchOperation.LESS_THAN);
+        }
+
+        return null;
+    }
+
+    private SearchCriteria getCriteriaStates(List<String> states) {
+        if (states != null) {
+            List<EventState> eventStates = new ArrayList<>();
+            for (String state : states) {
+                state = state.toUpperCase();
+                if (EventState.isIn(state)) {
+                    eventStates.add(EventState.valueOf(state));
+                } else {
+                    throw new BadRequestException("Wrong state");
+                }
+            }
+
+            return new SearchCriteria("state", eventStates, SearchOperation.IN);
+        }
+
+        return null;
+    }
+
+    private SearchCriteria getCriteriaTextInTitle(String text) {
+
+        return new SearchCriteria("title", text, SearchOperation.MATCH);
+    }
+
+    private SearchCriteria getCriteriaTextInAnnotation(String text) {
+
+        return new SearchCriteria("annotation", text, SearchOperation.MATCH);
+    }
+
+    private SearchCriteria getCriteriaTextInDescription(String text) {
+
+        return new SearchCriteria("description", text, SearchOperation.MATCH);
     }
 }

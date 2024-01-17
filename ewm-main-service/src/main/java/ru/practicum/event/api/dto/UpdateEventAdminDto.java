@@ -7,7 +7,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import ru.practicum.event.api.service.EventService;
 import ru.practicum.location.entity.Location;
 
 import javax.validation.constraints.NotNull;
@@ -18,7 +17,7 @@ import java.time.LocalDateTime;
 import static prototype.Constants.DATE_FORMAT;
 
 /**
- * <h2>Новое событие</h2>
+ * <h2>Обновлённое событие</h2>
  * {@link #title}               Заголовок события <br/>
  * {@link #annotation}          Краткое описание события <br/>
  * {@link #description}         Полное описание события <br/>
@@ -60,5 +59,5 @@ public class UpdateEventAdminDto {
     private @PositiveOrZero Integer participantLimit;
     @BooleanFlag
     private Boolean requestModeration;
-    private EventService.StateAction stateAction;
+    private String stateAction;
 }

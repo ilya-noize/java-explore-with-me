@@ -86,7 +86,7 @@ public class CompilationService {
     }
 
     public List<CompilationDto> getAll(Integer from, Integer size) {
-        Pageable pageable = checkPageable(from, size);
+        Pageable pageable = checkPageable(from, size, null);
         return repository.findAll(pageable).stream()
                 .map(CompilationMapper.INSTANCE::toDto)
                 .collect(toList());

@@ -6,17 +6,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class NewEventRequestDto {
-    private long eventId;
-    private long initializerId;
-    private long visitorId;
-    private LocalDateTime created;
-    private boolean request;
+public class EventRequestStatusUpdateResult {
+    private List<EventRequestDto> confirmedRequests;
+    private List<EventRequestDto> rejectedRequests;
 }

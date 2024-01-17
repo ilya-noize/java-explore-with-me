@@ -12,9 +12,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.event.api.dto.EventDto;
+import ru.practicum.event.api.dto.EventShortDto;
 import ru.practicum.event.api.dto.NewEventDto;
 import ru.practicum.event.api.dto.UpdateEventDto;
 import ru.practicum.event.api.service.EventServiceImpl;
+import ru.practicum.event.request.api.dto.EventRequestStatusUpdateRequest;
+import ru.practicum.event.request.api.dto.EventRequestStatusUpdateResult;
+import ru.practicum.event.request.api.dto.EventRequestDto;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
@@ -32,16 +36,6 @@ public class EventPrivateController extends EventController {
         super(service);
     }
 
-    @GetMapping({"/users/{userId}/events"})
-    public List<EventDto> getByInitializer(
-            @PathVariable Long userId,
-            @RequestParam(required = false, defaultValue = FROM) @Min(0) Integer from,
-            @RequestParam(required = false, defaultValue = SIZE) @Min(1) Integer size) {
-        log.debug("[i] get events by initializer ID:{}", userId);
-
-        return service.getByInitializer(userId, from, size);
-    }
-
     @PostMapping({"/users/{userId}/events"})
     @ResponseStatus(HttpStatus.CREATED)
     public EventDto create(@PathVariable Long userId,
@@ -49,6 +43,16 @@ public class EventPrivateController extends EventController {
         log.debug("[i] new event");
 
         return service.create(userId, newEventDto);
+    }
+
+    @GetMapping({"/users/{userId}/events"})
+    public List<EventShortDto> getByInitializer(
+            @PathVariable Long userId,
+            @RequestParam(required = false, defaultValue = FROM) @Min(0) Integer from,
+            @RequestParam(required = false, defaultValue = SIZE) @Min(1) Integer size) {
+        log.debug("[i] get events by initializer ID:{}", userId);
+
+        return service.getByInitializer(userId, from, size);
     }
 
     @GetMapping({"/users/{userId}/events/{eventId}"})
@@ -70,18 +74,19 @@ public class EventPrivateController extends EventController {
     }
 
     @GetMapping({"/users/{userId}/events/{eventId}/requests"})
-    public List<EventDto> getRequestsInEvent(@PathVariable Long userId,
-                                             @PathVariable Long eventId) {
+    public List<EventRequestDto> getRequestsInEvent(@PathVariable Long userId,
+                                                    @PathVariable Long eventId) {
         log.debug("[i] get request in event ID:{} from user ID:{}", eventId, userId);
 
         return service.getRequestsInEvent(userId, eventId);
     }
 
     @PatchMapping({"/users/{userId}/events/{eventId}/requests"})
-    public List<EventDto> updateRequestsInEvent(@PathVariable Long userId,
-                                                @PathVariable Long eventId) {
+    public EventRequestStatusUpdateResult updateRequestsInEvent(@PathVariable Long userId,
+                                                                @PathVariable Long eventId,
+                                                                @RequestBody EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest) {
         log.debug("[i] update request in event ID:{} from user ID:{}", eventId, userId);
 
-        return service.updateRequestsInEvent(userId, eventId);
+        return service.updateRequestsInEvent(userId, eventId, eventRequestStatusUpdateRequest);
     }
 }

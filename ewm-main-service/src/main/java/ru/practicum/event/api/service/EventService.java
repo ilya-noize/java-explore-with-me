@@ -1,40 +1,22 @@
 package ru.practicum.event.api.service;
 
+import org.apache.commons.lang3.EnumUtils;
 import ru.practicum.event.api.dto.EventDto;
 import ru.practicum.event.api.dto.EventShortDto;
 import ru.practicum.event.api.dto.NewEventDto;
 import ru.practicum.event.api.dto.UpdateEventAdminDto;
 import ru.practicum.event.api.dto.UpdateEventDto;
+import ru.practicum.event.request.api.dto.EventRequestDto;
+import ru.practicum.event.request.api.dto.EventRequestStatusUpdateRequest;
+import ru.practicum.event.request.api.dto.EventRequestStatusUpdateResult;
+import ru.practicum.exception.BadRequestException;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static java.lang.String.format;
+
 public interface EventService {
-    /**
-     * Состояние события
-     */
-    enum EventState {
-        PENDING,
-        PUBLISHED,
-        CANCELED
-    }
-
-    /**
-     * Сортировка событий в поиске
-     */
-    enum EventSortState {
-        EVENT_DATE,
-        VIEWS
-    }
-
-    /**
-     * Состояние события при обновлении
-     */
-    enum StateAction {
-        SEND_TO_REVIEW,
-        CANCEL_REVIEW
-    }
-
     EventDto create(long userId, NewEventDto newEventDto);
 
     /**
@@ -45,7 +27,7 @@ public interface EventService {
      * @param size   Pageable
      * @return List DTO events
      */
-    List<EventDto> getByInitializer(Long userId, Integer from, Integer size);
+    List<EventShortDto> getByInitializer(Long userId, Integer from, Integer size);
 
     /**
      * PRIVATE
@@ -60,8 +42,12 @@ public interface EventService {
      * PRIVATE
      * <p>
      * Обратите внимание:
-     * - изменить можно только отмененные события или события в состоянии ожидания модерации (Ожидается код ошибки 409)
-     * - дата и время на которые намечено событие не может быть раньше, чем через два часа от текущего момента (Ожидается код ошибки 409)
+     * <ul>
+     *     <li>изменить можно только отмененные события
+     *     или события в состоянии ожидания модерации (Ожидается код ошибки 409)</li>
+     *     <li>дата и время на которые намечено событие не может быть раньше,
+     *     чем через два часа от текущего момента (Ожидается код ошибки 409)</li>
+     * </ul>
      *
      * @param userId         ID user
      * @param eventId        ID event
@@ -77,7 +63,7 @@ public interface EventService {
      * @param eventId ID event
      * @return List DTO events
      */
-    List<EventDto> getRequestsInEvent(Long userId, Long eventId);
+    List<EventRequestDto> getRequestsInEvent(Long userId, Long eventId);
 
     /**
      * PRIVATE
@@ -89,36 +75,43 @@ public interface EventService {
      *     <li>если при подтверждении данной заявки, лимит заявок для события исчерпан, то все неподтверждённые заявки необходимо отклонить</li>
      * </ul>
      *
-     * @param userId  ID user
-     * @param eventId ID event
+     * @param userId                          ID user
+     * @param eventId                         ID event
+     * @param eventRequestStatusUpdateRequest Update status event request
      * @return List DTO events
      */
-    List<EventDto> updateRequestsInEvent(Long userId, Long eventId);
+    EventRequestStatusUpdateResult updateRequestsInEvent(
+            Long userId,
+            Long eventId,
+            EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest);
 
     /**
      * ADMIN
      * <p>
      * Редактирование данных любого события администратором. Валидация данных не требуется. Обратите внимание:
-     * дата начала изменяемого события должна быть не ранее чем за час от даты публикации. (Ожидается код ошибки 409)
-     * событие можно публиковать, только если оно в состоянии ожидания публикации (Ожидается код ошибки 409)
-     * событие можно отклонить, только если оно еще не опубликовано (Ожидается код ошибки 409)
-     * @param eventId   ID event
-     * @param updateEventAdminDto   update event
-     * @return  DTO event
+     * <ul>
+     *     <li>дата начала изменяемого события должна быть не ранее чем за час от даты публикации. (Ожидается код ошибки 409)</li>
+     *     <li>событие можно публиковать, только если оно в состоянии ожидания публикации (Ожидается код ошибки 409)</li>
+     *     <li>событие можно отклонить, только если оно еще не опубликовано (Ожидается код ошибки 409)</li>
+     * </ul>
+     *
+     * @param eventId             ID event
+     * @param updateEventAdminDto update event
+     * @return DTO event
      */
     EventDto eventAdministration(Long eventId, UpdateEventAdminDto updateEventAdminDto);
 
     /**
      * ADMIN
      *
-     * @param users         List ID users
-     * @param states        List events state
-     * @param categories    List ID categories
-     * @param rangeStart    start Date
-     * @param rangeEnd      finish Date
-     * @param from          From page
-     * @param size          Pages
-     * @return  List DTO events
+     * @param users      List ID users
+     * @param states     List events state
+     * @param categories List ID categories
+     * @param rangeStart start Date
+     * @param rangeEnd   finish Date
+     * @param from       From page
+     * @param size       Pages
+     * @return List DTO events
      */
     List<EventDto> getEventsAdministration(
             List<Long> users,
@@ -155,7 +148,6 @@ public interface EventService {
             Integer from,
             Integer size);
 
-
     /**
      * PUBLIC
      * <p>      * Получение подробной информации об опубликованном событии по его идентификатору
@@ -165,10 +157,52 @@ public interface EventService {
      *     <li>информация о событии должна включать в себя количество просмотров и количество подтвержденных запросов</li>
      *     <li>информацию о том, что по этому эндпоинту был осуществлен и обработан запрос, нужно сохранить в сервисе статистики</li>
      * </ul>
-     *
+     * <p>
      * В случае, если события с заданным id не найдено, возвращает статус код 404
+     *
      * @param eventId ID event
-     * @return  DTO Event
+     * @return DTO Event
      */
     EventDto get(Long eventId);
+
+    /**
+     * Состояние события
+     */
+    enum EventState {
+        PENDING,
+        PUBLISHED,
+        CANCELED;
+
+        public static boolean isIn(String eventState) {
+            return EnumUtils.isValidEnum(
+                    EventState.class,
+                    eventState.toUpperCase()
+            );
+        }
+
+        public static EventState getInstance(String string) {
+            try {
+                return EventState.valueOf(string.toUpperCase());
+            } catch (RuntimeException e) {
+                throw new BadRequestException(format("Wrong event state: %s", string));
+            }
+        }
+    }
+
+    /**
+     * Сортировка событий в поиске
+     */
+    enum EventSortState {
+        EVENT_DATE,
+        VIEWS
+    }
+
+
+    /**
+     * Состояние события при обновлении
+     */
+    enum StateAction {
+        SEND_TO_REVIEW,
+        CANCEL_REVIEW
+    }
 }

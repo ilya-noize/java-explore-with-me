@@ -12,6 +12,6 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class EventRequestStatusUpdateResponse {
-    private ParticipationRequestDto confirmedRequests;
-    private ParticipationRequestDto rejectedRequests;
+    private EventRequestDto confirmedRequests;
+    private EventRequestDto rejectedRequests;
 }

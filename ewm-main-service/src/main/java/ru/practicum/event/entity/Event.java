@@ -38,24 +38,29 @@ public class Event {
     private Long id;
 
     private @NotNull @Size(
-            max = 256
+            max = 120,
+            min = 3
     ) String title;
     private @NotNull @Size(
-            max = 512,
-            min = 64
+            max = 2000,
+            min = 20
     ) String annotation;
     private @Size(
-            max = 2048
+            max = 7000,
+            min = 20
     ) String description;
     @ManyToOne
     @JoinColumn(name = "category_id")
+//    Warning:(53, 25) Cannot resolve column 'category_id'
     private @NotNull Category category;
     @ManyToOne
     @JoinColumn(name = "initiator_id")
+//    Warning:(56, 25) Cannot resolve column 'initiator_id'
     private @NotNull User initiator;
 
     @OneToOne
     @JoinColumn(name = "location_id")
+//    Warning:(60, 25) Cannot resolve column 'location_id'
     private @NotNull Location location;
     @BooleanFlag
     private @NotNull boolean paid;

@@ -37,7 +37,7 @@ public class UserController {
             @RequestParam(required = false, defaultValue = FROM) @Min(0) Integer from,
             @RequestParam(required = false, defaultValue = SIZE) @Min(1) Integer size) {
 
-        return service.getAll(ids, checkPageable(from, size));
+        return service.getAll(ids, checkPageable(from, size, null));
     }
 
     @DeleteMapping({"/admin/users/{id}"})

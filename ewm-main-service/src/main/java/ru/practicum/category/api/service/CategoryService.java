@@ -55,7 +55,7 @@ public class CategoryService {
     }
 
     public List<CategoryDto> getAll(Integer from, Integer size) {
-        Pageable pageable = checkPageable(from, size);
+        Pageable pageable = checkPageable(from, size, null);
         return categoryRepository.findAll(pageable)
                 .stream()
                 .map(CategoryMapper.INSTANCE::toDto)

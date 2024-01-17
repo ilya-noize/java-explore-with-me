@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import prototype.Constants;
+import prototype.Constants.RequestState;
 
 import java.util.List;
 
@@ -16,5 +16,5 @@ import java.util.List;
 @AllArgsConstructor
 public class EventRequestStatusUpdateRequest {
     private List<Long> requestIds;
-    private Constants.RequestState status;
+    private RequestState status;
 }

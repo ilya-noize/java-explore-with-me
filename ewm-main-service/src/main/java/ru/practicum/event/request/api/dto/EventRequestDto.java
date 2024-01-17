@@ -15,7 +15,7 @@ import prototype.Constants;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ParticipationRequestDto {
+public class EventRequestDto {
     private long id;
     private LocalDateTime created;
     private long event;
