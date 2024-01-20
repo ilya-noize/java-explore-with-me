@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import prototype.Controller;
 import ru.practicum.category.api.dto.CategoryDto;
 import ru.practicum.category.api.dto.NewCategoryDto;
 import ru.practicum.category.api.service.CategoryService;
@@ -29,7 +28,7 @@ import static prototype.Constants.SIZE;
 @RequiredArgsConstructor
 @Slf4j
 @Validated
-public class CategoryController implements Controller<CategoryDto, NewCategoryDto> {
+public class CategoryController {
     private final CategoryService service;
 
     @PostMapping({"/admin/categories"})
