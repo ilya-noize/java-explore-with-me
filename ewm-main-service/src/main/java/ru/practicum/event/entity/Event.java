@@ -1,7 +1,6 @@
 package ru.practicum.event.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import jdk.jfr.BooleanFlag;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -83,7 +82,6 @@ public class Event {
     @JoinColumn(name = "location_id")
 //    Warning:(60, 25) Cannot resolve column 'location_id'
     private @NotNull Location location;
-    @BooleanFlag
     private @NotNull boolean paid;
     @JsonFormat(
             pattern = DATE_FORMAT
@@ -100,7 +98,6 @@ public class Event {
     @OneToMany(mappedBy = "event")
     private List<EventRequest> confirmedRequests;
     private @PositiveOrZero int participantLimit;
-    @BooleanFlag
     private boolean requestModeration;
     private EventService.EventState state;
     private long views;

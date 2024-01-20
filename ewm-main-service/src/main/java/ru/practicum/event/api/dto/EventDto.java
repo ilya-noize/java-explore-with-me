@@ -1,7 +1,6 @@
 package ru.practicum.event.api.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import jdk.jfr.BooleanFlag;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -32,7 +31,6 @@ public class EventDto {
     private @NotNull CategoryDto category;
     private @NotNull UserShortDto initiator;
     private @NotNull Location location;
-    @BooleanFlag
     private @NotNull boolean paid;
     @JsonFormat(
             pattern = DATE_FORMAT
@@ -46,9 +44,8 @@ public class EventDto {
             pattern = DATE_FORMAT
     )
     private @NotNull LocalDateTime eventDate;
-    private long confirmedRequests;
+    private int confirmedRequests;
     private @PositiveOrZero int participantLimit;
-    @BooleanFlag
     private boolean requestModeration;
     private EventService.EventState state;
     private long views;
