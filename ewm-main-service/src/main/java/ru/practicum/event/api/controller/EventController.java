@@ -10,6 +10,7 @@ import ru.practicum.event.api.dto.EventDto;
 import ru.practicum.event.api.dto.EventShortDto;
 import ru.practicum.event.api.service.EventService;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.Min;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -55,27 +56,28 @@ public class EventController {
             @RequestParam LocalDateTime rangeEnd,
             @RequestParam(defaultValue = "false") Boolean onlyAvailable,
             @RequestParam String sort,
+            HttpServletRequest httpServletRequest,
             @RequestParam(required = false, defaultValue = FROM) @Min(0) Integer from,
             @RequestParam(required = false, defaultValue = SIZE) @Min(1) Integer size) {
-        log.debug("[i] get all events");
+        log.debug("[i] get all events. Params: {\n" +
+                        "\t text = {},\n" +
+                        "\t categories = {},\n" +
+                        "\t paid = {},\n" +
+                        "\t rangeStart = {},\n" +
+                        "\t rangeEnd = {},\n" +
+                        "\t onlyAvailable = {},\n" +
+                        "\t sort = {}\n}",
+                text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort);
 
         return service.getAll(
-                text,
-                categories,
-                paid,
-                rangeStart,
-                rangeEnd,
-                onlyAvailable,
-                sort,
-                from,
-                size
-        );
+                text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, httpServletRequest,
+                from, size);
     }
 
 
     @GetMapping({"/events/{eventId}"})
-    public EventDto get(@PathVariable Long eventId) {
+    public EventDto get(@PathVariable Long eventId, HttpServletRequest httpRequest) {
         log.debug("[i] get event ID:{}", eventId);
-        return service.get(eventId);
+        return service.get(eventId, httpRequest);
     }
 }

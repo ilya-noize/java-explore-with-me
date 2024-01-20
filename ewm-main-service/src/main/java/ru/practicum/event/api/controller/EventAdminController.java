@@ -1,5 +1,6 @@
 package ru.practicum.event.api.controller;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -7,9 +8,10 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.event.api.dto.EventDto;
 import ru.practicum.event.api.dto.UpdateEventAdminDto;
-import ru.practicum.event.api.service.EventServiceImpl;
+import ru.practicum.event.api.service.EventService;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
@@ -22,10 +24,10 @@ import static prototype.Constants.SIZE;
 
 
 @Slf4j
-public class EventAdminController extends EventController {
-    public EventAdminController(EventServiceImpl service) {
-        super(service);
-    }
+@RestController
+@RequiredArgsConstructor
+public class EventAdminController {
+    private final EventService service;
 
     /**
      * Редактирование данных любого события администратором. Валидация данных не требуется.

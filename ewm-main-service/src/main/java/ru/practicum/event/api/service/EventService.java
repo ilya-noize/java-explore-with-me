@@ -9,14 +9,46 @@ import ru.practicum.event.api.dto.UpdateEventDto;
 import ru.practicum.event.request.api.dto.EventRequestDto;
 import ru.practicum.event.request.api.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.event.request.api.dto.EventRequestStatusUpdateResult;
-import ru.practicum.exception.BadRequestException;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static java.lang.String.format;
-
 public interface EventService {
+
+    /**
+     * Состояние события
+     */
+    enum EventState {
+        PENDING,
+        PUBLISHED,
+        CANCELED;
+
+        public static boolean isValid(String eventState) {
+            return EnumUtils.isValidEnum(
+                    EventState.class,
+                    eventState.toUpperCase()
+            );
+        }
+    }
+
+    /**
+     * Сортировка событий в поиске
+     */
+    enum EventSortState {
+        EVENT_DATE,
+        VIEWS
+    }
+
+
+    /**
+     * Состояние события при обновлении
+     */
+    enum StateAction {
+        SEND_TO_REVIEW,
+        CANCEL_REVIEW
+    }
+
     EventDto create(long userId, NewEventDto newEventDto);
 
     /**
@@ -145,6 +177,7 @@ public interface EventService {
             LocalDateTime rangeEnd,
             Boolean onlyAvailable,
             String sort,
+            HttpServletRequest httpServletRequest,
             Integer from,
             Integer size);
 
@@ -160,49 +193,9 @@ public interface EventService {
      * <p>
      * В случае, если события с заданным id не найдено, возвращает статус код 404
      *
-     * @param eventId ID event
+     * @param eventId     ID event
+     * @param httpRequest http-data in statisticDB
      * @return DTO Event
      */
-    EventDto get(Long eventId);
-
-    /**
-     * Состояние события
-     */
-    enum EventState {
-        PENDING,
-        PUBLISHED,
-        CANCELED;
-
-        public static boolean isIn(String eventState) {
-            return EnumUtils.isValidEnum(
-                    EventState.class,
-                    eventState.toUpperCase()
-            );
-        }
-
-        public static EventState getInstance(String string) {
-            try {
-                return EventState.valueOf(string.toUpperCase());
-            } catch (RuntimeException e) {
-                throw new BadRequestException(format("Wrong event state: %s", string));
-            }
-        }
-    }
-
-    /**
-     * Сортировка событий в поиске
-     */
-    enum EventSortState {
-        EVENT_DATE,
-        VIEWS
-    }
-
-
-    /**
-     * Состояние события при обновлении
-     */
-    enum StateAction {
-        SEND_TO_REVIEW,
-        CANCEL_REVIEW
-    }
+    EventDto get(Long eventId, HttpServletRequest httpRequest);
 }

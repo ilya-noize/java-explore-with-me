@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ru.practicum.category.entity.Category;
 import ru.practicum.event.api.service.EventService;
+import ru.practicum.event.request.entity.EventRequest;
 import ru.practicum.location.entity.Location;
 import ru.practicum.user.entity.User;
 
@@ -18,14 +19,35 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.PositiveOrZero;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static prototype.Constants.DATE_FORMAT;
 
+/**
+ * <h2>Событие</h2>
+ * {@link #id} - ID <br/>
+ * {@link #title} - Название <br/>
+ * {@link #annotation} - Аннотация <br/>
+ * {@link #description} - Описание <br/>
+ * {@link #category} - Категория <br/>
+ * {@link #initiator} - Инициатор (организатор) <br/>
+ * {@link #location} - Место проведения (широта, долгота) <br/>
+ * {@link #paid} - Триггер необходимости оплаты <br/>
+ * {@link #createdOn} - Дата создания (назначается при создании) <br/>
+ * {@link #publishedOn} - Дата публикации (назначается после модерации администратором) <br/>
+ * {@link #eventDate} - Дата проведения мероприятия <br/>
+ * {@link #confirmedRequests} - Список желающий принять участие в мероприятии <br/>
+ * {@link #participantLimit} - Максимальное количество участников <br/>
+ * {@link #requestModeration} - Триггер модерации инициатором заявок на участие в мероприятии <br/>
+ * {@link #state} - Состояние (для модерации) <br/>
+ * {@link #views} - Просмотры <br/>
+ */
 @Entity
 @Getter
 @Setter
@@ -57,7 +79,6 @@ public class Event {
     @JoinColumn(name = "initiator_id")
 //    Warning:(56, 25) Cannot resolve column 'initiator_id'
     private @NotNull User initiator;
-
     @OneToOne
     @JoinColumn(name = "location_id")
 //    Warning:(60, 25) Cannot resolve column 'location_id'
@@ -76,7 +97,8 @@ public class Event {
             pattern = DATE_FORMAT
     )
     private @NotNull LocalDateTime eventDate;
-    private long confirmedRequests;
+    @OneToMany(mappedBy = "event")
+    private List<EventRequest> confirmedRequests;
     private @PositiveOrZero int participantLimit;
     @BooleanFlag
     private boolean requestModeration;

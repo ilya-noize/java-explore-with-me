@@ -5,8 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.EnumUtils;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import prototype.Constants.StateAdminAction;
+import ru.practicum.HitDto;
+import ru.practicum.ViewStatsDto;
 import ru.practicum.category.api.repository.CategoryRepository;
 import ru.practicum.category.entity.Category;
 import ru.practicum.event.api.dto.EventDto;
@@ -25,6 +28,7 @@ import ru.practicum.event.request.api.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.event.request.api.dto.EventRequestStatusUpdateResult;
 import ru.practicum.event.request.api.mapper.EventRequestMapper;
 import ru.practicum.event.request.api.repository.EventRequestRepository;
+import ru.practicum.event.request.api.service.EventRequestService;
 import ru.practicum.event.request.entity.EventRequest;
 import ru.practicum.exception.BadRequestException;
 import ru.practicum.exception.ConflictException;
@@ -32,35 +36,39 @@ import ru.practicum.exception.ForbiddenException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.location.entity.Location;
 import ru.practicum.location.repository.LocationRepository;
-import ru.practicum.service.ClientService;
+import ru.practicum.service.StatisticService;
 import ru.practicum.user.api.repository.UserRepository;
 import ru.practicum.user.entity.User;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static prototype.Constants.CATEGORY_NOT_EXISTS;
 import static prototype.Constants.EVENT_NOT_EXISTS;
-import static prototype.Constants.RequestState;
-import static prototype.Constants.StateAdminAction.PUBLISH_EVENT;
 import static prototype.Constants.USER_NOT_EXISTS;
 import static prototype.Constants.checkPageable;
+import static ru.practicum.event.request.api.service.EventRequestService.RequestState.CONFIRMED;
+import static ru.practicum.event.request.api.service.EventRequestService.RequestState.PENDING;
+import static ru.practicum.event.request.api.service.EventRequestService.RequestState.REJECTED;
+//import static ru.practicum.event.request.api.service.EventRequestService.RequestState;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class EventServiceImpl implements EventService {
-
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final EventRequestRepository requestRepository;
     private final LocationRepository locationRepository;
-    private final ClientService statistic;
+    private final StatisticService statisticService;
 
     @Override
     public EventDto create(long userId, NewEventDto newEventDto) {
@@ -101,9 +109,6 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventDto updateByInitializerAndId(Long userId, Long eventId, UpdateEventDto dto) {
-        //400 - request error
-        //404 - not fount event
-        //409 - Событие не удовлетворяет правилам редактирования: only pending or cancelled
         User initiator = getUser(userId);
         Event event = eventRepository.getByInitiatorAndId(initiator, eventId)
                 .orElseThrow(() -> new NotFoundException(EVENT_NOT_EXISTS));
@@ -158,31 +163,28 @@ public class EventServiceImpl implements EventService {
             Long userId,
             Long eventId,
             EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest) {
-        //400 - request error
-        //404 - not fount event
-        //409 - Достигнут лимит одобренных заявок
         isExistsUser(userId);
         Event event = getEvent(eventId);
         validateConfirmation(event);
         List<Long> requestIds = eventRequestStatusUpdateRequest.getRequestIds();
         List<EventRequest> requests = requestRepository.findAllById(requestIds);
-        long limit = requestRepository.countByEvent_IdAndStatus(eventId, RequestState.CONFIRMED);
+        int limit = requestRepository.countByEvent_IdAndStatus(eventId, CONFIRMED);
         int participantLimit = event.getParticipantLimit();
         validateLimitRequests(participantLimit, limit);
 
         EventRequestStatusUpdateResult statusUpdateResponse = new EventRequestStatusUpdateResult();
-        RequestState updateStatus = eventRequestStatusUpdateRequest.getStatus();
+        EventRequestService.RequestState updateStatus = eventRequestStatusUpdateRequest.getStatus();
         for (EventRequest request : requests) {
             validateRequestStatus(request.getStatus());
-            if (updateStatus.equals(RequestState.CONFIRMED)) {
+            if (updateStatus.equals(CONFIRMED)) {
                 if (limit < participantLimit) {
-                    request.setStatus(RequestState.CONFIRMED);
+                    request.setStatus(CONFIRMED);
                     limit++;
                 } else {
-                    request.setStatus(RequestState.REJECTED);
+                    request.setStatus(REJECTED);
                 }
             } else {
-                request.setStatus(RequestState.REJECTED);
+                request.setStatus(REJECTED);
             }
             statusUpdateResponse.getConfirmedRequests().add(EventRequestMapper.INSTANCE.toDto(request));
         }
@@ -239,12 +241,7 @@ public class EventServiceImpl implements EventService {
         eventSpecification.add(getCriteriaRangeStart(rangeStart));
         eventSpecification.add(getCriteriaRangeFinish(rangeFinish));
 
-        List<Event> events;
-        if (eventSpecification.getList().isEmpty()) {
-            events = eventRepository.findAll(eventSpecification, pageable).toList();
-        } else {
-            events = eventRepository.findAll(pageable);
-        }
+        List<Event> events = getEventsBySpecs(eventSpecification, pageable);
 
         return events.stream()
                 .map(EventMapper.INSTANCE::toDto)
@@ -260,10 +257,11 @@ public class EventServiceImpl implements EventService {
             LocalDateTime rangeFinish,
             Boolean onlyAvailable,
             String sort,
+            HttpServletRequest httpServletRequest,
             Integer from,
             Integer size) {
-
         Pageable pageable = checkPageable(from, size, getSort(sort));
+        if (rangeStart == null) rangeStart = LocalDateTime.now();
         validateRange(rangeStart, rangeFinish);
         EventSpecification eventSpecification = new EventSpecification();
         if (text != null) {
@@ -276,20 +274,69 @@ public class EventServiceImpl implements EventService {
         eventSpecification.add(getCriteriaPaid(paid));
         eventSpecification.add(getCriteriaRangeStart(rangeStart));
         eventSpecification.add(getCriteriaRangeFinish(rangeFinish));
-        // todo stop
-        return null;
+        if (onlyAvailable) eventSpecification.add(getCriteriaParticipantLimitNotDefined());
+        List<Event> events = getEventsBySpecs(eventSpecification, pageable);
+
+        return events.stream()
+                .filter(event -> {
+                    if (onlyAvailable && event.getParticipantLimit() != 0) {
+                        addHit(httpServletRequest);
+                        return event.getParticipantLimit() > event.getConfirmedRequests().size();
+                    }
+                    addHit(httpServletRequest);
+                    return true;
+                })
+                .map(EventMapper.INSTANCE::toShortDto)
+                .collect(toList());
     }
 
+
     @Override
-    public EventDto get(Long eventId) {
-        // todo
+    public EventDto get(Long eventId, HttpServletRequest httpRequest) {
         Event event = getEvent(eventId);
         if (!event.getState().equals(EventState.PUBLISHED)) {
-            throw new NotFoundException(format(EVENT_NOT_EXISTS,eventId));
+            throw new NotFoundException(format(EVENT_NOT_EXISTS, eventId));
         }
-        int view = 0;
-        // todo stop
-        return null;
+        addHit(httpRequest);
+//        event.setViews(event.getViews() + 1);
+        event.setViews(getViews(eventId));
+        return EventMapper.INSTANCE.toDto(event);
+    }
+
+    private List<Event> getEventsBySpecs(EventSpecification eventSpecification, Pageable pageable) {
+        if (eventSpecification.getList().isEmpty()) {
+
+            return eventRepository.findAll(eventSpecification, pageable).toList();
+        } else {
+
+            return eventRepository.findAll(pageable);
+        }
+    }
+
+    private void addHit(HttpServletRequest httpServletRequest) {
+        statisticService.post(HitDto.builder()
+                .app("ewm-main-service")
+                .uri(httpServletRequest.getRequestURI())
+                .ip(httpServletRequest.getRemoteAddr())
+                .timestamp(LocalDateTime.now())
+                .build());
+    }
+
+    private Integer getViews(long eventId) {
+        ResponseEntity<ViewStatsDto[]> response = statisticService.getData(
+                LocalDateTime.now().minusYears(1),
+                LocalDateTime.now(),
+                new String[]{"/events/" + eventId},
+                true);
+        int views = 0;
+        Optional<ViewStatsDto> stat;
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            stat = Arrays.stream(response.getBody()).findFirst();
+            if (stat.isPresent()) {
+                views = Math.toIntExact(stat.get().getHits());
+            }
+        }
+        return views;
     }
 
     private void updateTitleAnnotationDescriptionCategoryLocationPaidParticipantLimitModeration(
@@ -318,7 +365,7 @@ public class EventServiceImpl implements EventService {
         }
     }
 
-    private void isExistsEvent(Long eventId) {
+    private void isExistsEvent(long eventId) {
         if (!eventRepository.existsById(eventId)) {
             throw new NotFoundException(format(EVENT_NOT_EXISTS, eventId));
         }
@@ -338,20 +385,18 @@ public class EventServiceImpl implements EventService {
 
         return userRepository.findById(userId)
                 .orElseThrow(() ->
-                        new BadRequestException(
-                                format(USER_NOT_EXISTS, userId)
-                        )
-                );
+                        new BadRequestException(format(USER_NOT_EXISTS, userId)));
     }
 
-    private Category getCategory(Long id) {
+    private Category getCategory(long id) {
 
         return categoryRepository.findById(id)
                 .orElseThrow(() ->
                         new NotFoundException(format(CATEGORY_NOT_EXISTS, id)));
     }
 
-    private Event getEvent(Long eventId) {
+    private Event getEvent(long eventId) {
+
         return eventRepository.findById(eventId)
                 .orElseThrow(() ->
                         new NotFoundException(format(EVENT_NOT_EXISTS, eventId)));
@@ -371,16 +416,20 @@ public class EventServiceImpl implements EventService {
                                                EventState eventState) {
         String eventStateErrorMessage = "The event was moderated. " +
                 "Current status of the event: %s";
-        if (stateAction.equals(PUBLISH_EVENT)) {
-            if (eventState != EventState.PENDING) {
-                throw new ForbiddenException(format(eventStateErrorMessage, eventState));
-            }
-            return EventState.PUBLISHED;
-        } else {
-            if (eventState == EventState.PUBLISHED) {
-                throw new ForbiddenException(format(eventStateErrorMessage, eventState));
-            }
-            return EventState.CANCELED;
+        switch (stateAction) {
+            case PUBLISH_EVENT:
+                if (eventState != EventState.PENDING) {
+                    throw new ForbiddenException(format(eventStateErrorMessage, eventState));
+                }
+                return EventState.PUBLISHED;
+            case REJECT_EVENT:
+                if (eventState == EventState.PUBLISHED) {
+                    throw new ForbiddenException(format(eventStateErrorMessage, eventState));
+                }
+                return EventState.CANCELED;
+            default:
+                throw new ForbiddenException(format("Wrong status of" +
+                        " the administrator's action: %s", stateAction));
         }
     }
 
@@ -388,9 +437,9 @@ public class EventServiceImpl implements EventService {
         sort = sort.toUpperCase();
         switch (EnumUtils.getEnum(EventSortState.class, sort)) {
             case VIEWS:
-                return Sort.by("eventDate").descending();
-            case EVENT_DATE:
                 return Sort.by("views").descending();
+            case EVENT_DATE:
+                return Sort.by("eventDate").descending();
             default:
                 throw new BadRequestException("Wrong sorting parameters");
         }
@@ -415,10 +464,16 @@ public class EventServiceImpl implements EventService {
         }
     }
 
+    /**
+     * 409 - Conflict if event limit equals limit current time
+     *
+     * @param participantLimit event limit
+     * @param limit            now limit
+     */
     private void validateLimitRequests(int participantLimit,
-                                       long limit) {
+                                       int limit) {
         if (participantLimit == limit) {
-            throw new ForbiddenException("it is not possible to confirm the application " +
+            throw new ConflictException("it is not possible to confirm the application " +
                     "if the limit on applications for this event has already been reached");
         }
     }
@@ -442,8 +497,8 @@ public class EventServiceImpl implements EventService {
         }
     }
 
-    private void validateRequestStatus(RequestState status) {
-        if (!status.equals(RequestState.PENDING)) {
+    private void validateRequestStatus(EventRequestService.RequestState status) {
+        if (!status.equals(PENDING)) {
             throw new ForbiddenException((format("Wrong request state: %s", status)));
         }
     }
@@ -511,12 +566,16 @@ public class EventServiceImpl implements EventService {
         return null;
     }
 
+    private SearchCriteria getCriteriaParticipantLimitNotDefined() {
+        return new SearchCriteria("participantLimit", 0, SearchOperation.EQUAL);
+    }
+
     private SearchCriteria getCriteriaStates(List<String> states) {
         if (states != null) {
             List<EventState> eventStates = new ArrayList<>();
             for (String state : states) {
                 state = state.toUpperCase();
-                if (EventState.isIn(state)) {
+                if (EventState.isValid(state)) {
                     eventStates.add(EventState.valueOf(state));
                 } else {
                     throw new BadRequestException("Wrong state");

@@ -1,5 +1,6 @@
 package ru.practicum.event.api.controller;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
@@ -15,10 +16,10 @@ import ru.practicum.event.api.dto.EventDto;
 import ru.practicum.event.api.dto.EventShortDto;
 import ru.practicum.event.api.dto.NewEventDto;
 import ru.practicum.event.api.dto.UpdateEventDto;
-import ru.practicum.event.api.service.EventServiceImpl;
+import ru.practicum.event.api.service.EventService;
+import ru.practicum.event.request.api.dto.EventRequestDto;
 import ru.practicum.event.request.api.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.event.request.api.dto.EventRequestStatusUpdateResult;
-import ru.practicum.event.request.api.dto.EventRequestDto;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
@@ -30,35 +31,35 @@ import static prototype.Constants.SIZE;
 @RestController
 @Slf4j
 @Validated
-public class EventPrivateController extends EventController {
+@RequiredArgsConstructor
+public class EventPrivateController {
 
-    public EventPrivateController(EventServiceImpl service) {
-        super(service);
-    }
-
-    @PostMapping({"/users/{userId}/events"})
-    @ResponseStatus(HttpStatus.CREATED)
-    public EventDto create(@PathVariable Long userId,
-                           @RequestBody @Valid NewEventDto newEventDto) {
-        log.debug("[i] new event");
-
-        return service.create(userId, newEventDto);
-    }
+    private final EventService service;
 
     @GetMapping({"/users/{userId}/events"})
     public List<EventShortDto> getByInitializer(
             @PathVariable Long userId,
             @RequestParam(required = false, defaultValue = FROM) @Min(0) Integer from,
             @RequestParam(required = false, defaultValue = SIZE) @Min(1) Integer size) {
-        log.debug("[i] get events by initializer ID:{}", userId);
+        log.debug("[i] Получение событий, добавленных текущим пользователем ID:{}", userId);
 
         return service.getByInitializer(userId, from, size);
+    }
+
+    @PostMapping({"/users/{userId}/events"})
+    @ResponseStatus(HttpStatus.CREATED)
+    public EventDto create(@PathVariable Long userId,
+                           @RequestBody @Valid NewEventDto newEventDto) {
+        log.debug("[i] Добавление нового события");
+
+        return service.create(userId, newEventDto);
     }
 
     @GetMapping({"/users/{userId}/events/{eventId}"})
     public EventDto getByInitializerAndId(@PathVariable Long userId,
                                           @PathVariable Long eventId) {
-        log.debug("[i] get event ID:{} by initializer ID:{}", eventId, userId);
+        log.debug("[i] Получение полной информации о добавленном событии ID:{} " +
+                "текущим пользователем ID:{}", eventId, userId);
 
         return service.getByInitializerAndId(userId, eventId);
     }
@@ -68,7 +69,7 @@ public class EventPrivateController extends EventController {
             @PathVariable Long userId,
             @PathVariable Long eventId,
             @Valid UpdateEventDto updateEventDto) {
-        log.debug("[i] get event ID:{} by initializer ID:{}", eventId, userId);
+        log.debug("[i] Изменение добавленного события ID:{} текущим пользователем ID:{}", eventId, userId);
 
         return service.updateByInitializerAndId(userId, eventId, updateEventDto);
     }
@@ -76,16 +77,19 @@ public class EventPrivateController extends EventController {
     @GetMapping({"/users/{userId}/events/{eventId}/requests"})
     public List<EventRequestDto> getRequestsInEvent(@PathVariable Long userId,
                                                     @PathVariable Long eventId) {
-        log.debug("[i] get request in event ID:{} from user ID:{}", eventId, userId);
+        log.debug("[i] Получение информации о запросах на участие в событии ID:{} " +
+                "текущего пользователя ID:{}", eventId, userId);
 
         return service.getRequestsInEvent(userId, eventId);
     }
 
     @PatchMapping({"/users/{userId}/events/{eventId}/requests"})
-    public EventRequestStatusUpdateResult updateRequestsInEvent(@PathVariable Long userId,
-                                                                @PathVariable Long eventId,
-                                                                @RequestBody EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest) {
-        log.debug("[i] update request in event ID:{} from user ID:{}", eventId, userId);
+    public EventRequestStatusUpdateResult updateRequestsInEvent(
+            @PathVariable Long userId,
+            @PathVariable Long eventId,
+            @RequestBody EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest) {
+        log.debug("[i] Изменение статуса (подтверждена, отменена) " +
+                "заявок на участие в событии ID:{} текущего пользователя ID:{}", eventId, userId);
 
         return service.updateRequestsInEvent(userId, eventId, eventRequestStatusUpdateRequest);
     }
