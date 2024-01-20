@@ -11,7 +11,7 @@ import org.springframework.http.HttpStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static prototype.Constants.DATE_FORMAT;
+import static ru.practicum.constants.Constants.DATE_FORMAT;
 
 @Getter
 @Setter

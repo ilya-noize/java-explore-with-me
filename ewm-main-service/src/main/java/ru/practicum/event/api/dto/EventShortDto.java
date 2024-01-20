@@ -13,7 +13,7 @@ import lombok.Setter;
 import ru.practicum.category.api.dto.CategoryDto;
 import ru.practicum.user.api.dto.UserShortDto;
 
-import static prototype.Constants.DATE_FORMAT;
+import static ru.practicum.constants.Constants.DATE_FORMAT;
 
 
 @Getter

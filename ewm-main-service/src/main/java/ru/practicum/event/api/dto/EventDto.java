@@ -16,7 +16,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.PositiveOrZero;
 import java.time.LocalDateTime;
 
-import static prototype.Constants.DATE_FORMAT;
+import static ru.practicum.constants.Constants.DATE_FORMAT;
 
 
 @Builder

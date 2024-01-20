@@ -21,8 +21,8 @@ import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import java.util.List;
 
-import static prototype.Constants.FROM;
-import static prototype.Constants.SIZE;
+import static ru.practicum.constants.Constants.FROM;
+import static ru.practicum.constants.Constants.SIZE;
 
 @RestController
 @RequiredArgsConstructor

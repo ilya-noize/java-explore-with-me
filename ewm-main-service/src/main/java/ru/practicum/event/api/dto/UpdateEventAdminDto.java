@@ -14,7 +14,7 @@ import javax.validation.constraints.PositiveOrZero;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 
-import static prototype.Constants.DATE_FORMAT;
+import static ru.practicum.constants.Constants.DATE_FORMAT;
 
 /**
  * <h2>Обновлённое событие</h2>

@@ -27,7 +27,7 @@ import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static prototype.Constants.DATE_FORMAT;
+import static ru.practicum.constants.Constants.DATE_FORMAT;
 
 /**
  * <h2>Событие</h2>

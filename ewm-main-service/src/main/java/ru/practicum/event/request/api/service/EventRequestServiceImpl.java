@@ -19,11 +19,11 @@ import java.util.List;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
-import static prototype.Constants.EVENT_NOT_EXISTS;
-import static prototype.Constants.EVENT_REQUEST_NOT_EXISTS;
+import static ru.practicum.constants.Constants.EVENT_NOT_EXISTS;
+import static ru.practicum.constants.Constants.EVENT_REQUEST_NOT_EXISTS;
 import static ru.practicum.event.request.api.service.EventRequestService.RequestState.CANCELED;
-import static prototype.Constants.USER_NOT_EXISTS;
-import static prototype.Constants.checkPageable;
+import static ru.practicum.constants.Constants.USER_NOT_EXISTS;
+import static ru.practicum.constants.Constants.checkPageable;
 import static ru.practicum.event.request.api.service.EventRequestService.RequestState.PENDING;
 
 @RestController

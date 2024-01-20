@@ -17,6 +17,11 @@ public interface EventRepository extends CrudRepository<Event, Long>, JpaSpecifi
 
     Optional<Event> getByInitiatorAndId(User user, Long eventId);
 
+    /**
+     * Used in category service. delete-method.
+     * @param id ID category
+     * @return Count events on category
+     */
     long countByCategory_Id(Long id);
 
     Optional<List<Event>> getByIdInOrderByIdAsc(Collection<Long> ids);

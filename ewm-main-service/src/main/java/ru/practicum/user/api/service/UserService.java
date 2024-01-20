@@ -15,8 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.stream.Collectors.toList;
-import static prototype.Constants.USER_NOT_EXISTS;
-import static prototype.Constants.checkPageable;
+import static ru.practicum.constants.Constants.USER_NOT_EXISTS;
+import static ru.practicum.constants.Constants.checkPageable;
 
 @Slf4j
 @Service

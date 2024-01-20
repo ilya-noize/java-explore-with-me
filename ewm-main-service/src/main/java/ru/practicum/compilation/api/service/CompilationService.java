@@ -19,8 +19,8 @@ import java.util.List;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
-import static prototype.Constants.COMPILATION_NOT_EXISTS;
-import static prototype.Constants.checkPageable;
+import static ru.practicum.constants.Constants.COMPILATION_NOT_EXISTS;
+import static ru.practicum.constants.Constants.checkPageable;
 
 @Service
 @Slf4j
