@@ -18,7 +18,6 @@ import java.util.List;
 
 import static prototype.Constants.FROM;
 import static prototype.Constants.SIZE;
-import static prototype.Constants.checkPageable;
 
 @RequiredArgsConstructor
 @Validated
@@ -37,7 +36,7 @@ public class UserController {
             @RequestParam(required = false, defaultValue = FROM) @Min(0) Integer from,
             @RequestParam(required = false, defaultValue = SIZE) @Min(1) Integer size) {
 
-        return service.getAll(ids, checkPageable(from, size, null));
+        return service.getAll(ids, from, size);
     }
 
     @DeleteMapping({"/admin/users/{id}"})

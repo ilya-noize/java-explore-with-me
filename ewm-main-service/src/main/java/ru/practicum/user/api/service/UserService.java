@@ -4,48 +4,51 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import ru.practicum.exception.BadRequestException;
+import ru.practicum.exception.NotFoundException;
 import ru.practicum.user.api.dto.NewUserDto;
 import ru.practicum.user.api.dto.UserDto;
 import ru.practicum.user.api.mapper.UserMapper;
 import ru.practicum.user.api.repository.UserRepository;
 import ru.practicum.user.entity.User;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import static java.util.stream.Collectors.toList;
 import static prototype.Constants.USER_NOT_EXISTS;
-import static prototype.Constants.UserGroup.BAN;
+import static prototype.Constants.checkPageable;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository repository;
-    private final UserMapper mapper;
 
     public UserDto create(NewUserDto newDto) {
         log.debug("[i] create user");
-        User user = mapper.toEntity(newDto);
+        User user = UserMapper.INSTANCE.toEntity(newDto);
 
-        return mapper.toDto(repository.save(user));
+        return UserMapper.INSTANCE.toDto(repository.save(user));
     }
 
-    public List<UserDto> getAll(List<Long> ids, Pageable pageable) {
+    public List<UserDto> getAll(List<Long> ids, Integer from, Integer size) {
         log.debug("[i] get users");
 
-        return repository.getByIdInAndUserGroupNotOrderByIdAsc(ids, BAN, pageable);
+        Pageable pageable = checkPageable(from, size, null);
+        List<User> allUsersByIds = repository.findAllById(ids, pageable)
+                .orElse(new ArrayList<>());
+        return allUsersByIds.stream()
+                .map(UserMapper.INSTANCE::toDto)
+                .collect(toList());
     }
 
-    public void remove(Long id) {
-        log.debug("[i] make banned user");
-        isExistUserById(id);
-        repository.makeBannedUser(id, BAN);
-    }
 
-    private void isExistUserById(long id) {
-        if (!repository.existsById(id)) {
-            throw new BadRequestException(
-                    String.format(USER_NOT_EXISTS, id));
+    public void remove(long id) {
+        log.debug("[i] delete user ID:{}", id);
+        try {
+            repository.deleteById(id);
+        } catch (RuntimeException e) {
+            throw new NotFoundException(String.format(USER_NOT_EXISTS, id));
         }
     }
 }

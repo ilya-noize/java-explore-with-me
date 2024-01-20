@@ -1,24 +1,18 @@
 package ru.practicum.user.api.mapper;
 
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.factory.Mappers;
 import ru.practicum.user.api.dto.NewUserDto;
 import ru.practicum.user.api.dto.UserDto;
 import ru.practicum.user.entity.User;
 
-public class UserMapper {
-    public UserDto toDto(User user) {
+@Mapper
+public interface UserMapper {
+    UserMapper INSTANCE = Mappers.getMapper(UserMapper.class);
 
-        return UserDto.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .name(user.getName())
-                .build();
-    }
+    UserDto toDto(User user);
 
-    public User toEntity(NewUserDto dto) {
-
-        return User.builder()
-                .email(dto.getEmail())
-                .name(dto.getName())
-                .build();
-    }
+    @Mapping(target = "id", ignore = true)
+    User toEntity(NewUserDto dto);
 }
