@@ -1,13 +1,14 @@
 package ru.practicum.event.request.api.dto;
 
-import java.time.LocalDateTime;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import prototype.Constants;
+import ru.practicum.event.request.api.service.EventRequestService.RequestState;
+
+import javax.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 
 
 @Getter
@@ -16,9 +17,9 @@ import prototype.Constants;
 @NoArgsConstructor
 @AllArgsConstructor
 public class EventRequestDto {
-    private long id;
-    private LocalDateTime created;
-    private long event;
-    private long requester;
-    private Constants.ParticipationRequestState status;
+    private @NotNull long id;
+    private @NotNull LocalDateTime created;
+    private @NotNull long event;
+    private @NotNull long requester;
+    private @NotNull RequestState status;
 }

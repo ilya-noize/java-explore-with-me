@@ -1,61 +1,59 @@
 package ru.practicum.event.request.api.controller;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import ru.practicum.event.request.api.dto.NewEventRequestDto;
 import ru.practicum.event.request.api.dto.EventRequestDto;
+import ru.practicum.event.request.api.service.EventRequestService;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import java.util.List;
 
-/**
- * todo
- *  DEADLY CLASS
- */
 @RestController
+@Slf4j
 @Validated
+@RequiredArgsConstructor
 public class EventRequestsController {
+    private final EventRequestService service;
 
-    public EventRequestDto create(@RequestBody @Valid NewEventRequestDto newDto) {
-        return null;
+    @GetMapping({"/users/{userId}/requests"})
+    public List<EventRequestDto> getAllRequests(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "0") @Min(0L) Integer from,
+            @RequestParam(defaultValue = "10") @Min(1L) Integer size) {
+        log.debug("[i] Получение информации о заявках текущего пользователя ID:{} " +
+                "на участие в чужих событиях", userId);
+        return service.getAllRequests(userId, from, size);
     }
 
-    public EventRequestDto update(Long id, NewEventRequestDto newDto) {
-        return null;
+    @PostMapping({"/users/{userId}/requests"})
+    @ResponseStatus(HttpStatus.CREATED)
+    public EventRequestDto createRequest(@PathVariable Long userId,
+                                         @RequestBody @Valid EventRequestDto dto) {
+        log.debug("[i] Добавление запроса от текущего пользователя ID:{} " +
+                "на участие в событии ID:{}", userId, dto.getEvent());
+        dto.setRequester(userId);
+        return service.createRequest(dto);
     }
 
-    @PatchMapping({"/users/{userId}/events/{id}/requests"})
-    public EventRequestDto update(@PathVariable Long userId,
-                                  @PathVariable Long id,
-                                  @RequestBody @Valid NewEventRequestDto dto) {
-        dto.setInitializerId(userId);
-        dto.setEventId(id);
-        return null;
-    }
+    @PatchMapping({"/users/{userId}/requests/{requestId}/cancel"})
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public EventRequestDto cancelRequest(@PathVariable Long userId,
+                              @PathVariable Long requestId,
+                              @RequestBody EventRequestDto dto) {
+        dto.setId(requestId);
+        dto.setRequester(userId);
 
-    public EventRequestDto get(@PathVariable Long id) {
-        return null;
-    }
-
-    @GetMapping({"/admin/events"})
-    public List<EventRequestDto> getAll() {
-        return List.of(new EventRequestDto());
-    }
-
-    @GetMapping({"/users/{userId}/events/{id}/requests"})
-    public List<EventRequestDto> getAll(@PathVariable Long userId,
-                                        @PathVariable Long id,
-                                        @RequestParam(defaultValue = "0") @Min(0L) Integer from,
-                                        @RequestParam(defaultValue = "10") @Min(1L) Integer size) {
-        return null;
-    }
-
-    public void remove(@PathVariable Long id) {
+        return service.cancelRequest(dto);
     }
 }

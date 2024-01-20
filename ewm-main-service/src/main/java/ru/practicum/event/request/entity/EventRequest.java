@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import prototype.Constants.RequestState;
+import ru.practicum.event.request.api.service.EventRequestService.RequestState;
 import ru.practicum.event.entity.Event;
 import ru.practicum.user.entity.User;
 

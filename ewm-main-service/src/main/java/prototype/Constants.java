@@ -30,25 +30,6 @@ public interface Constants {
     }
 
     /**
-     * Права пользователей
-     */
-    enum UserGroup {
-        ROOT,
-        USER,
-        READ_ONLY,
-        BAN
-    }
-
-    /**
-     * Состояние запроса пользователя на участие в событии для инициатора
-     */
-    enum ParticipationRequestState {
-        PENDING,
-        CONFIRMED,
-        REJECTED
-    }
-
-    /**
      * Состояние события от администратора/модератора
      */
     enum StateAdminAction {
@@ -64,12 +45,4 @@ public interface Constants {
         }
     }
 
-    /**
-     * Состояние запроса пользователя на участие в событии для участника
-     */
-    enum RequestState {
-        PENDING,
-        CONFIRMED,
-        REJECTED
-    }
 }
