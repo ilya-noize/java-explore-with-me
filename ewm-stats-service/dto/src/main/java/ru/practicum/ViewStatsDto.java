@@ -3,6 +3,7 @@ package ru.practicum;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
@@ -12,6 +13,7 @@ import lombok.NoArgsConstructor;
  * {@link #hits}    Счётчик запросов    <br/>
  */
 @Builder
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
