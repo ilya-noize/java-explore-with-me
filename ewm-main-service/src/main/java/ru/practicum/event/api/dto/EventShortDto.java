@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDateTime;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import jdk.jfr.BooleanFlag;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -37,7 +36,6 @@ public class EventShortDto {
             pattern = DATE_FORMAT
     )
     private @NotNull LocalDateTime eventDate;
-    @BooleanFlag
     private @NotNull boolean paid;
     private long views;
 }
