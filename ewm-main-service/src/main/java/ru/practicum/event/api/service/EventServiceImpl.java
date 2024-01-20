@@ -7,11 +7,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import ru.practicum.constants.Constants.StateAdminAction;
 import ru.practicum.HitDto;
 import ru.practicum.ViewStatsDto;
 import ru.practicum.category.api.repository.CategoryRepository;
 import ru.practicum.category.entity.Category;
+import ru.practicum.constants.Constants.StateAdminAction;
 import ru.practicum.event.api.dto.EventDto;
 import ru.practicum.event.api.dto.EventShortDto;
 import ru.practicum.event.api.dto.NewEventDto;
@@ -57,7 +57,6 @@ import static ru.practicum.constants.Constants.checkPageable;
 import static ru.practicum.event.request.api.service.EventRequestService.RequestState.CONFIRMED;
 import static ru.practicum.event.request.api.service.EventRequestService.RequestState.PENDING;
 import static ru.practicum.event.request.api.service.EventRequestService.RequestState.REJECTED;
-//import static ru.practicum.event.request.api.service.EventRequestService.RequestState;
 
 @Service
 @Slf4j
@@ -71,18 +70,22 @@ public class EventServiceImpl implements EventService {
     private final StatisticService statisticService;
 
     @Override
-    public EventDto create(long userId, NewEventDto newEventDto) {
+    public EventDto create(long userId, NewEventDto dto) {
         // 400
         // 409 - Событие не удовлетворяет правилам создания
         User initiator = getUser(userId);
-        validateEventDate(newEventDto.getEventDate());
-        Event event = EventMapper.INSTANCE
-                .toEntity(newEventDto,
-                        initiator,
-                        LocalDateTime.now(),
-                        EventState.PENDING);
+        Category category = getCategory(dto.getCategoryId());
+        LocalDateTime eventDate = dto.getEventDate();
+        validateEventDate(eventDate);
+
+        Event event = EventMapper.INSTANCE.toEntity(dto);
+        event.setEventDate(eventDate);
+        event.setCategory(category);
+        event.setInitiator(initiator);
+        event.setState(EventState.PENDING);
+
         return EventMapper.INSTANCE.toDto(
-                eventRepository.save(event));
+                eventRepository.save(event), event.getConfirmedRequests().size());
     }
 
     @Override
@@ -104,7 +107,7 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() ->
                         new NotFoundException(format(EVENT_NOT_EXISTS, eventId)));
 
-        return EventMapper.INSTANCE.toDto(event);
+        return EventMapper.INSTANCE.toDto(event, event.getConfirmedRequests().size());
     }
 
     @Override
@@ -146,7 +149,9 @@ public class EventServiceImpl implements EventService {
             }
         }
 
-        return EventMapper.INSTANCE.toDto(eventRepository.save(event));
+        return EventMapper.INSTANCE.toDto(
+                eventRepository.save(event),
+                event.getConfirmedRequests().size());
     }
 
     @Override
@@ -219,7 +224,9 @@ public class EventServiceImpl implements EventService {
                 dto.getParticipantLimit(),
                 dto.getRequestModeration());
 
-        return EventMapper.INSTANCE.toDto(eventRepository.save(event));
+        return EventMapper.INSTANCE.toDto(
+                eventRepository.save(event),
+                event.getConfirmedRequests().size());
     }
 
     @Override
@@ -244,7 +251,8 @@ public class EventServiceImpl implements EventService {
         List<Event> events = getEventsBySpecs(eventSpecification, pageable);
 
         return events.stream()
-                .map(EventMapper.INSTANCE::toDto)
+                .map(event -> EventMapper.INSTANCE.toDto(event,
+                        event.getConfirmedRequests().size()))
                 .collect(toList());
     }
 
@@ -300,7 +308,8 @@ public class EventServiceImpl implements EventService {
         addHit(httpRequest);
 //        event.setViews(event.getViews() + 1);
         event.setViews(getViews(eventId));
-        return EventMapper.INSTANCE.toDto(event);
+        return EventMapper.INSTANCE.toDto(event,
+                event.getConfirmedRequests().size());
     }
 
     private List<Event> getEventsBySpecs(EventSpecification eventSpecification, Pageable pageable) {
