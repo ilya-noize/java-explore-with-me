@@ -24,5 +24,4 @@ public class Location {
     private long id;
     private double lat;
     private double lon;
-    private String address;
 }
