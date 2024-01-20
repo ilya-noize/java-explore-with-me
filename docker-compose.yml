@@ -11,6 +11,8 @@ services:
       - "pass.env"
     ports:
       - "9090:9090"
+    networks:
+      - ewm_backend
 
   stats-db:
     image: postgres:14-alpine
@@ -21,12 +23,40 @@ services:
       - "pass.env"
     ports:
       - "6541:5432"
+    networks:
+      - ewm_backend
 
   ewm-service:
     build: ewm-main-service
     container_name: emw-service
     ports:
       - "8080:8080"
+    depends_on:
+      - ewm-db
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - STATS_SERVER_URL=http://stats-server:9090
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://ewm-db:5432/ewm_main
+    networks:
+      - ewm_backend
 
-#  ewm-db:
-#    image: postgres:14-alpine
+  ewm-db:
+    image: postgres:14-alpine
+    container_name: main-db
+    ports:
+      - "6542:5432"
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - POSTGRES_DB=emw-db
+    env_file:
+      - "pass.env"
+    networks:
+      - ewm_backend
+
+networks:
+  ewm_backend:
+    driver: bridge
