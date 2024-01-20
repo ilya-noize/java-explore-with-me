@@ -63,11 +63,11 @@ import static ru.practicum.event.request.api.service.EventRequestService.Request
 @Slf4j
 @RequiredArgsConstructor
 public class EventServiceImpl implements EventService {
-    private final EventRepository eventRepository;
-    private final UserRepository userRepository;
-    private final CategoryRepository categoryRepository;
-    private final EventRequestRepository requestRepository;
-    private final LocationRepository locationRepository;
+    private EventRepository eventRepository;
+    private UserRepository userRepository;
+    private CategoryRepository categoryRepository;
+    private EventRequestRepository requestRepository;
+    private LocationRepository locationRepository;
     private final StatisticService statisticService;
 
     @Override
