@@ -1,6 +1,7 @@
 package ru.practicum.event.request.api.mapper;
 
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 import ru.practicum.event.api.mapper.EventMapper;
 import ru.practicum.event.request.api.dto.EventRequestDto;
@@ -11,5 +12,7 @@ import ru.practicum.user.api.mapper.UserMapper;
 public interface EventRequestMapper {
     EventRequestMapper INSTANCE = Mappers.getMapper(EventRequestMapper.class);
 
+    @Mapping(target = "event", source = "eventRequest.event.id")
+    @Mapping(target = "requester", source = "eventRequest.requester.id")
     EventRequestDto toDto(EventRequest eventRequest);
 }

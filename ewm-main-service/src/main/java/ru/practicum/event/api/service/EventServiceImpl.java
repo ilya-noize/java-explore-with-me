@@ -62,11 +62,11 @@ import static ru.practicum.event.request.api.service.EventRequestService.Request
 @Slf4j
 @RequiredArgsConstructor
 public class EventServiceImpl implements EventService {
-    private EventRepository eventRepository;
-    private UserRepository userRepository;
-    private CategoryRepository categoryRepository;
-    private EventRequestRepository requestRepository;
-    private LocationRepository locationRepository;
+    private final EventRepository eventRepository;
+    private final UserRepository userRepository;
+    private final CategoryRepository categoryRepository;
+    private final EventRequestRepository requestRepository;
+    private final LocationRepository locationRepository;
     private final StatisticService statisticService;
 
     @Override
@@ -74,7 +74,7 @@ public class EventServiceImpl implements EventService {
         // 400
         // 409 - Событие не удовлетворяет правилам создания
         User initiator = getUser(userId);
-        Category category = getCategory(dto.getCategoryId());
+        Category category = getCategory(dto.getCategory());
         LocalDateTime eventDate = dto.getEventDate();
         validateEventDate(eventDate);
 

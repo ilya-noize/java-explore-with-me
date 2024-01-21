@@ -24,8 +24,8 @@ import static ru.practicum.constants.Constants.checkPageable;
 @Slf4j
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
-    private CategoryRepository categoryRepository;
-    private EventRepository eventRepository;
+    private final CategoryRepository categoryRepository;
+    private final EventRepository eventRepository;
 
     @Override
     public CategoryDto create(NewCategoryDto newDto) {
