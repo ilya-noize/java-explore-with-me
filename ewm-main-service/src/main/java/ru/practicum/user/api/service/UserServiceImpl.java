@@ -2,7 +2,6 @@ package ru.practicum.user.api.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.user.api.dto.NewUserDto;
@@ -11,18 +10,16 @@ import ru.practicum.user.api.mapper.UserMapper;
 import ru.practicum.user.api.repository.UserRepository;
 import ru.practicum.user.entity.User;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.stream.Collectors.toList;
 import static ru.practicum.constants.Constants.USER_NOT_EXISTS;
-import static ru.practicum.constants.Constants.checkPageable;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
-    private UserRepository repository;
+    private final UserRepository repository;
 
     @Override
     public UserDto create(NewUserDto newDto) {
@@ -36,9 +33,7 @@ public class UserServiceImpl implements UserService {
     public List<UserDto> getAll(List<Long> ids, Integer from, Integer size) {
         log.debug("[i] get users");
 
-        Pageable pageable = checkPageable(from, size, null);
-        List<User> allUsersByIds = repository.findAllById(ids, pageable)
-                .orElse(new ArrayList<>());
+        List<User> allUsersByIds = repository.findAllById(ids);
         return allUsersByIds.stream()
                 .map(UserMapper.INSTANCE::toDto)
                 .collect(toList());
