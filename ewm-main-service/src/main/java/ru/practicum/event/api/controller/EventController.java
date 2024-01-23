@@ -49,16 +49,16 @@ public class EventController {
      */
     @GetMapping({"/events"})
     public List<EventShortDto> getAll(
-            @RequestParam String text,
-            @RequestParam List<Long> categories,
-            @RequestParam Boolean paid,
-            @RequestParam LocalDateTime rangeStart,
-            @RequestParam LocalDateTime rangeEnd,
-            @RequestParam(defaultValue = "false") Boolean onlyAvailable,
-            @RequestParam String sort,
-            HttpServletRequest httpServletRequest,
+            @RequestParam(required = false) String text,
+            @RequestParam(required = false) List<Long> categories,
+            @RequestParam(required = false) Boolean paid,
+            @RequestParam(required = false) LocalDateTime rangeStart,
+            @RequestParam(required = false) LocalDateTime rangeEnd,
+            @RequestParam(required = false) Boolean onlyAvailable,
+            @RequestParam(required = false) String sort,
             @RequestParam(required = false, defaultValue = FROM) @Min(0) Integer from,
-            @RequestParam(required = false, defaultValue = SIZE) @Min(1) Integer size) {
+            @RequestParam(required = false, defaultValue = SIZE) @Min(1) Integer size,
+            HttpServletRequest httpServletRequest) {
         log.debug("[i] get all events. Params: {\n" +
                         "\t text = {},\n" +
                         "\t categories = {},\n" +

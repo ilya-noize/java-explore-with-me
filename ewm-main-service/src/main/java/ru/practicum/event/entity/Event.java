@@ -13,6 +13,8 @@ import ru.practicum.location.entity.Location;
 import ru.practicum.user.entity.User;
 
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -102,6 +104,7 @@ public class Event {
     private List<EventRequest> confirmedRequests;
     private @PositiveOrZero int participantLimit;
     private boolean requestModeration;
+    @Enumerated(EnumType.STRING)
     private Constants.EventState state;
     private long views;
 }

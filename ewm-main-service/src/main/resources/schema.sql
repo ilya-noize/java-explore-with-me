@@ -54,7 +54,7 @@ CREATE TABLE event (
    event_date TIMESTAMP WITHOUT TIME ZONE NOT NULL,
    participant_limit INTEGER NOT NULL,
    request_moderation BOOLEAN NOT NULL,
-   state INTEGER,
+   state VARCHAR(20),
    views BIGINT NOT NULL,
    CONSTRAINT pk_event PRIMARY KEY (id)
 );

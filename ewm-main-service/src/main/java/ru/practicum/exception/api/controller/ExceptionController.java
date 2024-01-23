@@ -84,14 +84,14 @@ public class ExceptionController {
     public ApiError handleConflictException(ConflictException e) {
         String message = e.getMessage();
 
-        logError(NOT_FOUND, message, e);
+        logError(CONFLICT, message, e);
 
         return ApiError.builder()
                 .description("Data integrity violation.")
                 .errors(Collections.emptyList())
                 .message(message)
                 .reason("Data integrity violation.")
-                .status(NOT_FOUND)
+                .status(CONFLICT)
                 .timestamp(LocalDateTime.now())
                 .build();
     }
@@ -101,7 +101,7 @@ public class ExceptionController {
     public ApiError handleBadRequestException(BadRequestException e) {
         String message = e.getMessage();
 
-        logError(NOT_FOUND, message, e);
+        logError(BAD_REQUEST, message, e);
 
         return ApiError.builder()
                 .description("Wrong request.")

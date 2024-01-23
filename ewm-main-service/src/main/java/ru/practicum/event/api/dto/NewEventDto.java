@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.practicum.location.dto.LocationDto;
+import ru.practicum.location.entity.Location;
 
 import javax.validation.constraints.Future;
 import javax.validation.constraints.NotBlank;
@@ -53,7 +53,7 @@ public class NewEventDto {
             min = MIN_EVENT_DESCRIPTION_LENGTH
     ) String description;
     private @NotNull Long category;
-    private @NotNull LocationDto location;
+    private @NotNull Location location;
     private Boolean paid;
     @JsonFormat(
             pattern = DATE_FORMAT

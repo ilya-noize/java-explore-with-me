@@ -36,7 +36,6 @@ import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.ForbiddenException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.location.entity.Location;
-import ru.practicum.location.mapper.LocationMapper;
 import ru.practicum.location.repository.LocationRepository;
 import ru.practicum.service.StatisticService;
 import ru.practicum.user.api.repository.UserRepository;
@@ -85,11 +84,11 @@ public class EventServiceImpl implements EventService {
         event.setCategory(category);
         event.setInitiator(initiator);
         event.setState(Constants.EventState.PENDING);
-        Location location = LocationMapper.INSTANCE.toEntity(dto.getLocation());
-        event.setLocation(getLocation(location));
+        event.setLocation(getLocation(dto.getLocation()));
+        event.setCreatedOn(LocalDateTime.now());
 
         return EventMapper.INSTANCE.toDto(
-                eventRepository.save(event), event.getConfirmedRequests().size());
+                eventRepository.save(event));
     }
 
     @Override
@@ -111,7 +110,7 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() ->
                         new NotFoundException(format(EVENT_NOT_EXISTS, eventId)));
 
-        return EventMapper.INSTANCE.toDto(event, event.getConfirmedRequests().size());
+        return EventMapper.INSTANCE.toDto(event);
     }
 
     @Override
@@ -154,8 +153,7 @@ public class EventServiceImpl implements EventService {
         }
 
         return EventMapper.INSTANCE.toDto(
-                eventRepository.save(event),
-                event.getConfirmedRequests().size());
+                eventRepository.save(event));
     }
 
     @Override
@@ -227,9 +225,7 @@ public class EventServiceImpl implements EventService {
                 dto.getParticipantLimit(),
                 dto.getRequestModeration());
 
-        return EventMapper.INSTANCE.toDto(
-                eventRepository.save(event),
-                event.getConfirmedRequests().size());
+        return EventMapper.INSTANCE.toDto(eventRepository.save(event));
     }
 
     @Override
@@ -241,21 +237,25 @@ public class EventServiceImpl implements EventService {
             LocalDateTime rangeFinish,
             Integer from,
             Integer size) {
+        log.info("\nusers:{},\nstates:{},\ncategories:{},\nrangeStart:{},\nrangeFinish:{},\nfrom:{},\nsize:{}",
+                users, states, categories, rangeStart, rangeFinish, from, size);
+
         validateRange(rangeStart, rangeFinish);
         Pageable pageable = checkPageable(from, size, null);
         EventSpecification eventSpecification = new EventSpecification();
 
-        eventSpecification.add(getCriteriaListUsers(users));
-        eventSpecification.add(getCriteriaListCategories(categories));
-        eventSpecification.add(getCriteriaStates(states));
-        eventSpecification.add(getCriteriaRangeStart(rangeStart));
-        eventSpecification.add(getCriteriaRangeFinish(rangeFinish));
-
-        List<Event> events = getEventsBySpecs(eventSpecification, pageable);
+        if (users != null) eventSpecification.add(getCriteriaListUsers(users));
+        if (categories != null) eventSpecification.add(getCriteriaListCategories(categories));
+        if (states != null) eventSpecification.add(getCriteriaStates(states));
+        if (rangeStart != null) eventSpecification.add(getCriteriaRangeStart(rangeStart));
+        if (rangeFinish != null) eventSpecification.add(getCriteriaRangeFinish(rangeFinish));
+        List<Event> events;
+        boolean isEmptySpecs = eventSpecification.getList() == null;
+        log.info("[i] get Events By Specification : {}. Empty? - {}", eventSpecification, isEmptySpecs);
+        events = getEventsBySpecs(eventSpecification, pageable);
 
         return events.stream()
-                .map(event -> EventMapper.INSTANCE.toDto(event,
-                        event.getConfirmedRequests().size()))
+                .map(EventMapper.INSTANCE::toDto)
                 .collect(toList());
     }
 
@@ -272,7 +272,6 @@ public class EventServiceImpl implements EventService {
             Integer from,
             Integer size) {
         Pageable pageable = checkPageable(from, size, getSort(sort));
-        if (rangeStart == null) rangeStart = LocalDateTime.now();
         validateRange(rangeStart, rangeFinish);
         EventSpecification eventSpecification = new EventSpecification();
         if (text != null) {
@@ -281,16 +280,18 @@ public class EventServiceImpl implements EventService {
             eventSpecification.add(getCriteriaTextInAnnotation(text));
             eventSpecification.add(getCriteriaTextInDescription(text));
         }
-        eventSpecification.add(getCriteriaListCategories(categories));
-        eventSpecification.add(getCriteriaPaid(paid));
-        eventSpecification.add(getCriteriaRangeStart(rangeStart));
-        eventSpecification.add(getCriteriaRangeFinish(rangeFinish));
-        if (onlyAvailable) eventSpecification.add(getCriteriaParticipantLimitNotDefined());
+
+        if (categories != null) eventSpecification.add(getCriteriaListCategories(categories));
+        if (paid != null) eventSpecification.add(getCriteriaPaid(paid));
+        if (rangeStart != null) eventSpecification.add(getCriteriaRangeStart(rangeStart));
+        if (rangeFinish != null) eventSpecification.add(getCriteriaRangeFinish(rangeFinish));
+        boolean isOnlyAvailable = onlyAvailable != null && onlyAvailable;
+        if (isOnlyAvailable) eventSpecification.add(getCriteriaParticipantLimitNotDefined());
         List<Event> events = getEventsBySpecs(eventSpecification, pageable);
 
         return events.stream()
                 .filter(event -> {
-                    if (onlyAvailable && event.getParticipantLimit() != 0) {
+                    if (isOnlyAvailable && event.getParticipantLimit() != 0) {
                         addHit(httpServletRequest);
                         return event.getParticipantLimit() > event.getConfirmedRequests().size();
                     }
@@ -311,12 +312,11 @@ public class EventServiceImpl implements EventService {
         addHit(httpRequest);
 //        event.setViews(event.getViews() + 1);
         event.setViews(getViews(eventId));
-        return EventMapper.INSTANCE.toDto(event,
-                event.getConfirmedRequests().size());
+        return EventMapper.INSTANCE.toDto(event);
     }
 
     private List<Event> getEventsBySpecs(EventSpecification eventSpecification, Pageable pageable) {
-        if (eventSpecification.getList().isEmpty()) {
+        if (eventSpecification.getList() != null) {
 
             return eventRepository.findAll(eventSpecification, pageable).toList();
         } else {
@@ -446,6 +446,7 @@ public class EventServiceImpl implements EventService {
     }
 
     private Sort getSort(String sort) {
+        if (sort == null) return null;
         sort = sort.toUpperCase();
         switch (EnumUtils.getEnum(Constants.EventSortState.class, sort)) {
             case VIEWS:
@@ -493,6 +494,7 @@ public class EventServiceImpl implements EventService {
     private void validateRange(LocalDateTime rangeStart,
                                LocalDateTime rangeFinish) {
         String error;
+        if (rangeStart == null) rangeStart = LocalDateTime.now();
         if (rangeFinish != null) {
             if (rangeFinish.isAfter(rangeStart)) {
                 if (rangeFinish.equals(rangeStart)) {
@@ -503,9 +505,6 @@ public class EventServiceImpl implements EventService {
                 error = format("Finish:%td before Start:%td", rangeFinish, rangeStart);
                 throw new BadRequestException(error);
             }
-        } else {
-            error = "Finish is null";
-            throw new BadRequestException(error);
         }
     }
 
