@@ -8,6 +8,10 @@ import ru.practicum.exception.BadRequestException;
 import static java.lang.String.format;
 
 public interface Constants {
+    int MIN_USER_NAME_LENGTH = 2;
+    int MIN_USER_EMAIL_LENGTH = 6;
+    int MAX_USER_NAME_LENGTH = 250;
+    int MAX_USER_EMAIL_LENGTH = 254;
 
     String FROM = "0";
     String SIZE = "10";
@@ -20,6 +24,8 @@ public interface Constants {
     String USER_NOT_EXISTS = "User" + NOT_EXIST;
 
     static Pageable checkPageable(Integer from, Integer size, Sort sort) {
+        if (from == null) from = Integer.valueOf(FROM);
+        if (size == null) size = Integer.valueOf(SIZE);
         if (from < 0 || size <= 0) {
             throw new BadRequestException("Pageable incorrect");
         }

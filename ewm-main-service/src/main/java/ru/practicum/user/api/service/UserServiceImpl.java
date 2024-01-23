@@ -31,9 +31,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDto> getAll(List<Long> ids, Integer from, Integer size) {
-        log.debug("[i] get users");
+        log.debug("[i] get users from");
+        List<User> allUsersByIds;
+        if (ids == null) {
+            allUsersByIds = repository.findAll();
+        } else {
+            allUsersByIds = repository.findAllById(ids);
+        }
 
-        List<User> allUsersByIds = repository.findAllById(ids);
         return allUsersByIds.stream()
                 .map(UserMapper.INSTANCE::toDto)
                 .collect(toList());

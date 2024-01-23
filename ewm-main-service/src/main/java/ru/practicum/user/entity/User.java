@@ -24,6 +24,6 @@ public class User {
             strategy = GenerationType.IDENTITY
     )
     private Long id;
-    private @Column(unique = true) String email;
-    private String name;
+    private @Column(unique = true, length = 254) String email;
+    private @Column(length = 250) String name;
 }
