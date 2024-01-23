@@ -26,8 +26,8 @@ import static ru.practicum.constants.Constants.checkPageable;
 @Slf4j
 @RequiredArgsConstructor
 public class CompilationServiceImpl implements CompilationService {
-    private CompilationRepository repository;
-    private EventRepository eventRepository;
+    private final CompilationRepository repository;
+    private final EventRepository eventRepository;
 
     @Override
     public CompilationDto create(NewCompilationDto dto) {

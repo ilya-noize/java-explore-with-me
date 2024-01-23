@@ -2,6 +2,7 @@ package ru.practicum.compilation.api.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.compilation.api.dto.CompilationDto;
 import ru.practicum.compilation.api.service.CompilationService;
@@ -30,17 +32,18 @@ public class CompilationController {
     private final CompilationService service;
 
     @PostMapping({"/admin/compilations"})
-    public CompilationDto create(@RequestBody @Valid NewCompilationDto newDto) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public CompilationDto create(@RequestBody @Valid NewCompilationDto dto) {
         log.debug("[i][admin] create new compilation");
 
-        return service.create(newDto);
+        return service.create(dto);
     }
 
     @PatchMapping({"/admin/compilations/{id}"})
-    public CompilationDto update(@PathVariable Long id, @RequestBody @Valid CompilationDto newDto) {
+    public CompilationDto update(@PathVariable Long id, @RequestBody @Valid CompilationDto dto) {
         log.debug("[i][admin] update compilation ID:{}", id);
 
-        return service.update(id, newDto);
+        return service.update(id, dto);
     }
 
     @GetMapping({"/compilations/{id}"})

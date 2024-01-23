@@ -6,8 +6,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.util.List;
-import javax.validation.constraints.NotNull;
+
+import static ru.practicum.constants.Constants.MAX_COMPILATION_NAME_LENGTH;
+import static ru.practicum.constants.Constants.MIN_COMPILATION_NAME_LENGTH;
 
 @Builder
 @Getter
@@ -15,7 +19,10 @@ import javax.validation.constraints.NotNull;
 @NoArgsConstructor
 @AllArgsConstructor
 public class NewCompilationDto {
-    private @NotNull String title;
+    private @NotBlank @Size(
+            max = MAX_COMPILATION_NAME_LENGTH,
+            min = MIN_COMPILATION_NAME_LENGTH
+    ) String title;
     private Boolean pinned;
     private List<Long> events;
 }
