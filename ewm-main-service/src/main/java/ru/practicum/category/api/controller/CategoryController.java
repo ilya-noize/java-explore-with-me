@@ -33,22 +33,24 @@ public class CategoryController {
 
     @PostMapping({"/admin/categories"})
     @ResponseStatus(HttpStatus.CREATED)
-    public CategoryDto create(@RequestBody @Valid NewCategoryDto newDto) {
-        log.debug("[i][admin] new category: {}", newDto.getName());
-        return service.create(newDto);
+    public CategoryDto create(@RequestBody @Valid NewCategoryDto dto) {
+        log.debug("[i][admin] new category: {}", dto.getName());
+
+        return service.create(dto);
     }
 
     @PatchMapping({"/admin/categories/{id}"})
     public CategoryDto update(@PathVariable Long id,
-                              @RequestBody @Valid NewCategoryDto newDto) {
-        log.debug("[i][admin] update category: ID:{} -> {}", id, newDto.getName());
+                              @RequestBody @Valid NewCategoryDto dto) {
+        log.debug("[i][admin] update category: ID:{} -> {}", id, dto.getName());
 
-        return service.update(id, newDto);
+        return service.update(id, dto);
     }
 
     @GetMapping({"/categories/{id}"})
     public CategoryDto get(@PathVariable Long id) {
         log.debug("[i] get category ID:{}", id);
+
         return service.get(id);
     }
 
@@ -56,6 +58,7 @@ public class CategoryController {
     public List<CategoryDto> getAll(@RequestParam(required = false, defaultValue = FROM) @Min(0) Integer from,
                                     @RequestParam(required = false, defaultValue = SIZE) @Min(1) Integer size) {
         log.debug("[i] get list categories");
+
         return service.getAll(from, size);
     }
 

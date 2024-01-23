@@ -8,6 +8,8 @@ import ru.practicum.exception.BadRequestException;
 import static java.lang.String.format;
 
 public interface Constants {
+    int MIN_CATEGORY_NAME_LENGTH = 50;
+    int MAX_CATEGORY_NAME_LENGTH = 50;
     int MIN_USER_NAME_LENGTH = 2;
     int MIN_USER_EMAIL_LENGTH = 6;
     int MAX_USER_NAME_LENGTH = 250;
