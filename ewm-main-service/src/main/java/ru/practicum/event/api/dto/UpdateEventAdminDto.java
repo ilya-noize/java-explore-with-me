@@ -6,14 +6,21 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import ru.practicum.constants.Constants;
 import ru.practicum.location.entity.Location;
 
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.PositiveOrZero;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 
 import static ru.practicum.constants.Constants.DATE_FORMAT;
+import static ru.practicum.constants.Constants.MAX_EVENT_ANNOTATION_LENGTH;
+import static ru.practicum.constants.Constants.MAX_EVENT_DESCRIPTION_LENGTH;
+import static ru.practicum.constants.Constants.MAX_EVENT_TITLE_LENGTH;
+import static ru.practicum.constants.Constants.MIN_EVENT_ANNOTATION_LENGTH;
+import static ru.practicum.constants.Constants.MIN_EVENT_DESCRIPTION_LENGTH;
+import static ru.practicum.constants.Constants.MIN_EVENT_TITLE_LENGTH;
 
 /**
  * <h2>Обновлённое событие</h2>
@@ -35,26 +42,26 @@ import static ru.practicum.constants.Constants.DATE_FORMAT;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateEventAdminDto {
-    private @NotNull @Size(
-            max = 120,
-            min = 3
+    private @NotBlank @Size(
+            max = MAX_EVENT_TITLE_LENGTH,
+            min = MIN_EVENT_TITLE_LENGTH
     ) String title;
-    private @NotNull @Size(
-            max = 2000,
-            min = 20
+    private @NotBlank @Size(
+            max = MAX_EVENT_ANNOTATION_LENGTH,
+            min = MIN_EVENT_ANNOTATION_LENGTH
     ) String annotation;
     private @Size(
-            max = 7000,
-            min = 20
+            max = MAX_EVENT_DESCRIPTION_LENGTH,
+            min = MIN_EVENT_DESCRIPTION_LENGTH
     ) String description;
-    private @NotNull Long category;
-    private @NotNull Location location;
-    private @NotNull Boolean paid;
+    private @NotBlank Long category;
+    private @NotBlank Location location;
+    private @NotBlank Boolean paid;
     @JsonFormat(
             pattern = DATE_FORMAT
     )
-    private @NotNull LocalDateTime eventDate;
+    private @NotBlank LocalDateTime eventDate;
     private @PositiveOrZero Integer participantLimit;
     private Boolean requestModeration;
-    private String stateAction;
+    private Constants.StateAdminAction stateAction;
 }

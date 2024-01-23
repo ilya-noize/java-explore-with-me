@@ -3,9 +3,8 @@ package ru.practicum.event.api.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import ru.practicum.location.dto.LocationDto;
 
 import javax.validation.constraints.Future;
@@ -16,6 +15,12 @@ import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 
 import static ru.practicum.constants.Constants.DATE_FORMAT;
+import static ru.practicum.constants.Constants.MAX_EVENT_ANNOTATION_LENGTH;
+import static ru.practicum.constants.Constants.MAX_EVENT_DESCRIPTION_LENGTH;
+import static ru.practicum.constants.Constants.MAX_EVENT_TITLE_LENGTH;
+import static ru.practicum.constants.Constants.MIN_EVENT_ANNOTATION_LENGTH;
+import static ru.practicum.constants.Constants.MIN_EVENT_DESCRIPTION_LENGTH;
+import static ru.practicum.constants.Constants.MIN_EVENT_TITLE_LENGTH;
 
 /**
  * <h2>Новое событие</h2>
@@ -30,24 +35,23 @@ import static ru.practicum.constants.Constants.DATE_FORMAT;
  * {@link #requestModeration}   Нужна ли пре-модерация заявок на участие (true(default) - manual, false - auto). <br/>
  */
 
-@Getter
-@Setter
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class NewEventDto {
-    private @NotNull @Size(
-            max = 120,
-            min = 3
+    private @NotBlank @Size(
+            max = MAX_EVENT_TITLE_LENGTH,
+            min = MIN_EVENT_TITLE_LENGTH
     ) String title;
-    private @NotNull @Size(
-            max = 2000,
-            min = 20
+    private @NotBlank @Size(
+            max = MAX_EVENT_ANNOTATION_LENGTH,
+            min = MIN_EVENT_ANNOTATION_LENGTH
     ) String annotation;
     private @Size(
-            max = 7000,
-            min = 20
-    ) @NotBlank String description;
+            max = MAX_EVENT_DESCRIPTION_LENGTH,
+            min = MIN_EVENT_DESCRIPTION_LENGTH
+    ) String description;
     private @NotNull Long category;
     private @NotNull LocationDto location;
     private Boolean paid;

@@ -1,17 +1,27 @@
 package ru.practicum.constants;
 
+import org.apache.commons.lang3.EnumUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import ru.practicum.exception.BadRequestException;
 
-import static java.lang.String.format;
 
 public interface Constants {
-    int MIN_COMPILATION_NAME_LENGTH = 3;
-    int MAX_COMPILATION_NAME_LENGTH = 50;
+
+    int MIN_EVENT_TITLE_LENGTH = 3;
+    int MAX_EVENT_TITLE_LENGTH = 120;
+    int MIN_EVENT_ANNOTATION_LENGTH = 20;
+    int MAX_EVENT_ANNOTATION_LENGTH = 2000;
+    int MIN_EVENT_DESCRIPTION_LENGTH = 20;
+    int MAX_EVENT_DESCRIPTION_LENGTH = 7000;
+
     int MIN_CATEGORY_NAME_LENGTH = 3;
     int MAX_CATEGORY_NAME_LENGTH = 50;
+
+    int MIN_COMPILATION_NAME_LENGTH = 3;
+    int MAX_COMPILATION_NAME_LENGTH = 50;
+
     int MIN_USER_NAME_LENGTH = 2;
     int MIN_USER_EMAIL_LENGTH = 6;
     int MAX_USER_NAME_LENGTH = 250;
@@ -19,7 +29,9 @@ public interface Constants {
 
     String FROM = "0";
     String SIZE = "10";
+
     String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
+
     String NOT_EXIST = " with id:(%d) not exist";
     String CATEGORY_NOT_EXISTS = "Category" + NOT_EXIST;
     String COMPILATION_NOT_EXISTS = "Compilation" + NOT_EXIST;
@@ -44,15 +56,38 @@ public interface Constants {
      */
     enum StateAdminAction {
         PUBLISH_EVENT,
-        REJECT_EVENT;
+        REJECT_EVENT
+    }
 
-        public static StateAdminAction getInstance(String string) {
-            try {
-                return StateAdminAction.valueOf(string.toUpperCase());
-            } catch (RuntimeException e) {
-                throw new BadRequestException(format("Wrong action state for admin: %s", string));
-            }
+    /**
+     * Состояние события
+     */
+    enum EventState {
+        PENDING,
+        PUBLISHED,
+        CANCELED;
+
+        public static boolean isValid(String eventState) {
+            return EnumUtils.isValidEnum(
+                    EventState.class,
+                    eventState.toUpperCase()
+            );
         }
     }
 
+    /**
+     * Сортировка событий в поиске
+     */
+    enum EventSortState {
+        EVENT_DATE,
+        VIEWS
+    }
+
+    /**
+     * Состояние события при обновлении
+     */
+    enum StateAction {
+        SEND_TO_REVIEW,
+        CANCEL_REVIEW
+    }
 }

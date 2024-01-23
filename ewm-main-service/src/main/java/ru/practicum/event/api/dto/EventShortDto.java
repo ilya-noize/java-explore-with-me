@@ -1,9 +1,6 @@
 package ru.practicum.event.api.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -12,8 +9,13 @@ import lombok.Setter;
 import ru.practicum.category.api.dto.CategoryDto;
 import ru.practicum.user.api.dto.UserShortDto;
 
+import java.time.LocalDateTime;
+
 import static ru.practicum.constants.Constants.DATE_FORMAT;
 
+/**
+ * Just a class with data. Don't touch him.
+ */
 
 @Getter
 @Setter
@@ -22,20 +24,15 @@ import static ru.practicum.constants.Constants.DATE_FORMAT;
 @AllArgsConstructor
 public class EventShortDto {
     private long id;
-    private @NotNull @Size(
-            max = 256
-    ) String title;
-    private @NotNull @Size(
-            max = 512,
-            min = 64
-    ) String annotation;
-    private @NotNull CategoryDto category;
-    private @NotNull UserShortDto initiator;
+    private String title;
+    private String annotation;
+    private CategoryDto category;
+    private UserShortDto initiator;
     private long confirmedRequests;
     @JsonFormat(
             pattern = DATE_FORMAT
     )
-    private @NotNull LocalDateTime eventDate;
-    private @NotNull boolean paid;
+    private LocalDateTime eventDate;
+    private boolean paid;
     private long views;
 }

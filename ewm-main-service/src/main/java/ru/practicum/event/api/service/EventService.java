@@ -1,6 +1,5 @@
 package ru.practicum.event.api.service;
 
-import org.apache.commons.lang3.EnumUtils;
 import ru.practicum.event.api.dto.EventDto;
 import ru.practicum.event.api.dto.EventShortDto;
 import ru.practicum.event.api.dto.NewEventDto;
@@ -16,38 +15,6 @@ import java.util.List;
 
 public interface EventService {
 
-    /**
-     * Состояние события
-     */
-    enum EventState {
-        PENDING,
-        PUBLISHED,
-        CANCELED;
-
-        public static boolean isValid(String eventState) {
-            return EnumUtils.isValidEnum(
-                    EventState.class,
-                    eventState.toUpperCase()
-            );
-        }
-    }
-
-    /**
-     * Сортировка событий в поиске
-     */
-    enum EventSortState {
-        EVENT_DATE,
-        VIEWS
-    }
-
-
-    /**
-     * Состояние события при обновлении
-     */
-    enum StateAction {
-        SEND_TO_REVIEW,
-        CANCEL_REVIEW
-    }
 
     EventDto create(long userId, NewEventDto newEventDto);
 

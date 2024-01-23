@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ru.practicum.category.entity.Category;
-import ru.practicum.event.api.service.EventService;
+import ru.practicum.constants.Constants;
 import ru.practicum.event.request.entity.EventRequest;
 import ru.practicum.location.entity.Location;
 import ru.practicum.user.entity.User;
@@ -27,6 +27,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static ru.practicum.constants.Constants.DATE_FORMAT;
+import static ru.practicum.constants.Constants.MAX_EVENT_ANNOTATION_LENGTH;
+import static ru.practicum.constants.Constants.MAX_EVENT_DESCRIPTION_LENGTH;
+import static ru.practicum.constants.Constants.MAX_EVENT_TITLE_LENGTH;
+import static ru.practicum.constants.Constants.MIN_EVENT_ANNOTATION_LENGTH;
+import static ru.practicum.constants.Constants.MIN_EVENT_DESCRIPTION_LENGTH;
+import static ru.practicum.constants.Constants.MIN_EVENT_TITLE_LENGTH;
 
 /**
  * <h2>Событие</h2>
@@ -59,28 +65,25 @@ public class Event {
     private Long id;
 
     private @NotNull @Size(
-            max = 120,
-            min = 3
+            max = MAX_EVENT_TITLE_LENGTH,
+            min = MIN_EVENT_TITLE_LENGTH
     ) String title;
     private @NotNull @Size(
-            max = 2000,
-            min = 20
+            max = MAX_EVENT_ANNOTATION_LENGTH,
+            min = MIN_EVENT_ANNOTATION_LENGTH
     ) String annotation;
     private @Size(
-            max = 7000,
-            min = 20
+            max = MAX_EVENT_DESCRIPTION_LENGTH,
+            min = MIN_EVENT_DESCRIPTION_LENGTH
     ) String description;
     @ManyToOne
     @JoinColumn(name = "category_id")
-//    Warning:(53, 25) Cannot resolve column 'category_id'
     private @NotNull Category category;
     @ManyToOne
     @JoinColumn(name = "initiator_id")
-//    Warning:(56, 25) Cannot resolve column 'initiator_id'
     private @NotNull User initiator;
     @OneToOne
     @JoinColumn(name = "location_id")
-//    Warning:(60, 25) Cannot resolve column 'location_id'
     private @NotNull Location location;
     private @NotNull boolean paid;
     @JsonFormat(
@@ -99,6 +102,6 @@ public class Event {
     private List<EventRequest> confirmedRequests;
     private @PositiveOrZero int participantLimit;
     private boolean requestModeration;
-    private EventService.EventState state;
+    private Constants.EventState state;
     private long views;
 }

@@ -11,6 +11,7 @@ import ru.practicum.HitDto;
 import ru.practicum.ViewStatsDto;
 import ru.practicum.category.api.repository.CategoryRepository;
 import ru.practicum.category.entity.Category;
+import ru.practicum.constants.Constants;
 import ru.practicum.constants.Constants.StateAdminAction;
 import ru.practicum.event.api.dto.EventDto;
 import ru.practicum.event.api.dto.EventShortDto;
@@ -35,6 +36,7 @@ import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.ForbiddenException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.location.entity.Location;
+import ru.practicum.location.mapper.LocationMapper;
 import ru.practicum.location.repository.LocationRepository;
 import ru.practicum.service.StatisticService;
 import ru.practicum.user.api.repository.UserRepository;
@@ -82,7 +84,9 @@ public class EventServiceImpl implements EventService {
         event.setEventDate(eventDate);
         event.setCategory(category);
         event.setInitiator(initiator);
-        event.setState(EventState.PENDING);
+        event.setState(Constants.EventState.PENDING);
+        Location location = LocationMapper.INSTANCE.toEntity(dto.getLocation());
+        event.setLocation(getLocation(location));
 
         return EventMapper.INSTANCE.toDto(
                 eventRepository.save(event), event.getConfirmedRequests().size());
@@ -115,8 +119,8 @@ public class EventServiceImpl implements EventService {
         User initiator = getUser(userId);
         Event event = eventRepository.getByInitiatorAndId(initiator, eventId)
                 .orElseThrow(() -> new NotFoundException(EVENT_NOT_EXISTS));
-        EventState eventState = event.getState();
-        if (eventState.equals(EventState.PUBLISHED)) {
+        Constants.EventState eventState = event.getState();
+        if (eventState.equals(Constants.EventState.PUBLISHED)) {
             throw new ForbiddenException(format("Wrong event state: %s", eventState));
         }
 
@@ -137,14 +141,14 @@ public class EventServiceImpl implements EventService {
                 dto.getRequestModeration()
         );
 
-        StateAction stateAction = dto.getStateAction();
+        Constants.StateAction stateAction = dto.getStateAction();
         if (stateAction != null) {
             switch (stateAction) {
                 case SEND_TO_REVIEW:
-                    event.setState(EventState.PENDING);
+                    event.setState(Constants.EventState.PENDING);
                     break;
                 case CANCEL_REVIEW:
-                    event.setState(EventState.CANCELED);
+                    event.setState(Constants.EventState.CANCELED);
                     break;
             }
         }
@@ -206,12 +210,11 @@ public class EventServiceImpl implements EventService {
         LocalDateTime newEventDate = dto.getEventDate();
         validateAdminTimeMoment(newEventDate);
 
-        String stateAction = dto.getStateAction();
-        EventState eventState = event.getState();
-        EventState newEventState = getValidAdminEventState(
-                StateAdminAction.getInstance(stateAction), eventState);
-        event.setState(stateAction != null ? newEventState : event.getState());
-        if (event.getState().equals(EventState.PUBLISHED)) {
+        Constants.StateAdminAction stateAction = dto.getStateAction();
+        Constants.EventState eventState = event.getState();
+        event.setState(getModifyEventState(stateAction, eventState));
+
+        if (event.getState().equals(Constants.EventState.PUBLISHED)) {
             event.setPublishedOn(LocalDateTime.now());
         }
         updateTitleAnnotationDescriptionCategoryLocationPaidParticipantLimitModeration(event,
@@ -302,7 +305,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventDto get(Long eventId, HttpServletRequest httpRequest) {
         Event event = getEvent(eventId);
-        if (!event.getState().equals(EventState.PUBLISHED)) {
+        if (!event.getState().equals(Constants.EventState.PUBLISHED)) {
             throw new NotFoundException(format(EVENT_NOT_EXISTS, eventId));
         }
         addHit(httpRequest);
@@ -421,21 +424,21 @@ public class EventServiceImpl implements EventService {
         return null;
     }
 
-    private EventState getValidAdminEventState(StateAdminAction stateAction,
-                                               EventState eventState) {
+    private Constants.EventState getModifyEventState(StateAdminAction stateAction,
+                                                     Constants.EventState eventState) {
         String eventStateErrorMessage = "The event was moderated. " +
                 "Current status of the event: %s";
         switch (stateAction) {
             case PUBLISH_EVENT:
-                if (eventState != EventState.PENDING) {
+                if (eventState != Constants.EventState.PENDING) {
                     throw new ForbiddenException(format(eventStateErrorMessage, eventState));
                 }
-                return EventState.PUBLISHED;
+                return Constants.EventState.PUBLISHED;
             case REJECT_EVENT:
-                if (eventState == EventState.PUBLISHED) {
+                if (eventState == Constants.EventState.PUBLISHED) {
                     throw new ForbiddenException(format(eventStateErrorMessage, eventState));
                 }
-                return EventState.CANCELED;
+                return Constants.EventState.CANCELED;
             default:
                 throw new ForbiddenException(format("Wrong status of" +
                         " the administrator's action: %s", stateAction));
@@ -444,7 +447,7 @@ public class EventServiceImpl implements EventService {
 
     private Sort getSort(String sort) {
         sort = sort.toUpperCase();
-        switch (EnumUtils.getEnum(EventSortState.class, sort)) {
+        switch (EnumUtils.getEnum(Constants.EventSortState.class, sort)) {
             case VIEWS:
                 return Sort.by("views").descending();
             case EVENT_DATE:
@@ -581,11 +584,11 @@ public class EventServiceImpl implements EventService {
 
     private SearchCriteria getCriteriaStates(List<String> states) {
         if (states != null) {
-            List<EventState> eventStates = new ArrayList<>();
+            List<Constants.EventState> eventStates = new ArrayList<>();
             for (String state : states) {
                 state = state.toUpperCase();
-                if (EventState.isValid(state)) {
-                    eventStates.add(EventState.valueOf(state));
+                if (Constants.EventState.isValid(state)) {
+                    eventStates.add(Constants.EventState.valueOf(state));
                 } else {
                     throw new BadRequestException("Wrong state");
                 }

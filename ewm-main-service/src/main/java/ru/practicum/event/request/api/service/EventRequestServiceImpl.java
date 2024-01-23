@@ -30,9 +30,9 @@ import static ru.practicum.event.request.api.service.EventRequestService.Request
 @Slf4j
 @RequiredArgsConstructor
 public class EventRequestServiceImpl implements EventRequestService {
-    private EventRequestRepository requestRepository;
-    private UserRepository userRepository;
-    private EventRepository eventRepository;
+    private final EventRequestRepository requestRepository;
+    private final UserRepository userRepository;
+    private final EventRepository eventRepository;
 
     @Override
     public List<EventRequestDto> getAllRequests(Long userId, Integer from, Integer size) {

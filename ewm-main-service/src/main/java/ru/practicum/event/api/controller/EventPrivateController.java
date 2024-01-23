@@ -49,10 +49,10 @@ public class EventPrivateController {
     @PostMapping({"/users/{userId}/events"})
     @ResponseStatus(HttpStatus.CREATED)
     public EventDto create(@PathVariable Long userId,
-                           @RequestBody @Valid NewEventDto newEventDto) {
-        log.debug("[i] Добавление нового события");
+                           @RequestBody @Valid NewEventDto dto) {
+        log.info("[i] Добавление нового события \ndto:{}", dto);
 
-        return service.create(userId, newEventDto);
+        return service.create(userId, dto);
     }
 
     @GetMapping({"/users/{userId}/events/{eventId}"})
@@ -68,10 +68,10 @@ public class EventPrivateController {
     public EventDto updateByInitializerAndId(
             @PathVariable Long userId,
             @PathVariable Long eventId,
-            @Valid UpdateEventDto updateEventDto) {
+            @Valid UpdateEventDto dto) {
         log.debug("[i] Изменение добавленного события ID:{} текущим пользователем ID:{}", eventId, userId);
 
-        return service.updateByInitializerAndId(userId, eventId, updateEventDto);
+        return service.updateByInitializerAndId(userId, eventId, dto);
     }
 
     @GetMapping({"/users/{userId}/events/{eventId}/requests"})
