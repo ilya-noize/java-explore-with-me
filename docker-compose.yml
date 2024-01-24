@@ -32,6 +32,8 @@ services:
     container_name: main-service
     ports:
       - "8080:8080"
+    env_file:
+      - "pass_main.env"
     depends_on:
       - ewm-db
     networks:
