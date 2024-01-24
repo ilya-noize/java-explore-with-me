@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.lang.Nullable;
 import ru.practicum.event.entity.Event;
 
 import javax.persistence.criteria.CriteriaBuilder;
@@ -30,7 +29,7 @@ public class EventSpecification implements Specification<Event> {
     }
 
     @Override
-    public Predicate toPredicate(@Nullable Root<Event> root, @Nullable CriteriaQuery<?> query, @Nullable CriteriaBuilder builder) {
+    public Predicate toPredicate(Root<Event> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
         //create a new predicate list
         List<Predicate> predicates = new ArrayList<>();
         Objects.requireNonNull(root);
