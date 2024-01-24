@@ -10,14 +10,4 @@ public interface EventRequestService {
     EventRequestDto createRequest(EventRequestDto dto);
 
     EventRequestDto cancelRequest(EventRequestDto dto);
-
-    /**
-     * Состояние запроса пользователя на участие в событии для участника
-     */
-    enum RequestState {
-        PENDING,
-        CONFIRMED,
-        REJECTED,
-        CANCELED
-    }
 }

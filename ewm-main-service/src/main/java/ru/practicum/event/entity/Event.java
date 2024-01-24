@@ -22,7 +22,6 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.PositiveOrZero;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
@@ -66,11 +65,11 @@ public class Event {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private @NotNull @Size(
+    private @Size(
             max = MAX_EVENT_TITLE_LENGTH,
             min = MIN_EVENT_TITLE_LENGTH
     ) String title;
-    private @NotNull @Size(
+    private @Size(
             max = MAX_EVENT_ANNOTATION_LENGTH,
             min = MIN_EVENT_ANNOTATION_LENGTH
     ) String annotation;
@@ -80,14 +79,14 @@ public class Event {
     ) String description;
     @ManyToOne
     @JoinColumn(name = "category_id")
-    private @NotNull Category category;
+    private Category category;
     @ManyToOne
     @JoinColumn(name = "initiator_id")
-    private @NotNull User initiator;
+    private User initiator;
     @OneToOne
     @JoinColumn(name = "location_id")
-    private @NotNull Location location;
-    private @NotNull boolean paid;
+    private Location location;
+    private boolean paid;
     @JsonFormat(
             pattern = DATE_FORMAT
     )
@@ -99,7 +98,7 @@ public class Event {
     @JsonFormat(
             pattern = DATE_FORMAT
     )
-    private @NotNull LocalDateTime eventDate;
+    private LocalDateTime eventDate;
     @OneToMany(mappedBy = "event")
     private List<EventRequest> confirmedRequests;
     private @PositiveOrZero int participantLimit;

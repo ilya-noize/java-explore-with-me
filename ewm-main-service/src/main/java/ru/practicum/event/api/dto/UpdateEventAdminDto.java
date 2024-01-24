@@ -7,9 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ru.practicum.constants.Constants;
-import ru.practicum.location.entity.Location;
+import ru.practicum.location.dto.LocationDto;
 
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.PositiveOrZero;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
@@ -42,11 +41,11 @@ import static ru.practicum.constants.Constants.MIN_EVENT_TITLE_LENGTH;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateEventAdminDto {
-    private @NotBlank @Size(
+    private @Size(
             max = MAX_EVENT_TITLE_LENGTH,
             min = MIN_EVENT_TITLE_LENGTH
     ) String title;
-    private @NotBlank @Size(
+    private @Size(
             max = MAX_EVENT_ANNOTATION_LENGTH,
             min = MIN_EVENT_ANNOTATION_LENGTH
     ) String annotation;
@@ -54,13 +53,13 @@ public class UpdateEventAdminDto {
             max = MAX_EVENT_DESCRIPTION_LENGTH,
             min = MIN_EVENT_DESCRIPTION_LENGTH
     ) String description;
-    private @NotBlank Long category;
-    private @NotBlank Location location;
-    private @NotBlank Boolean paid;
+    private Long category;
+    private LocationDto location;
+    private Boolean paid;
     @JsonFormat(
             pattern = DATE_FORMAT
     )
-    private @NotBlank LocalDateTime eventDate;
+    private LocalDateTime eventDate;
     private @PositiveOrZero Integer participantLimit;
     private Boolean requestModeration;
     private Constants.StateAdminAction stateAction;

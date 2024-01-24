@@ -23,7 +23,7 @@ import static ru.practicum.constants.Constants.DATE_FORMAT;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class EventDto {
+public final class EventDto {
     private long id;
     private @NotNull String title;
     private @NotNull String annotation;

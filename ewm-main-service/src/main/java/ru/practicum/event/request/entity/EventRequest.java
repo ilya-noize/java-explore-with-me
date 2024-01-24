@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import ru.practicum.event.request.api.service.EventRequestService.RequestState;
+import ru.practicum.constants.Constants.RequestState;
 import ru.practicum.event.entity.Event;
 import ru.practicum.user.entity.User;
 
@@ -31,11 +31,9 @@ public class EventRequest {
     private Long id;
     @ManyToOne
     @JoinColumn(name = "event_id")
-//    Warning:(33, 25) Cannot resolve column 'event_id'
     private Event event;
     @ManyToOne
     @JoinColumn(name = "requester_id")
-//    Warning:(36, 25) Cannot resolve column 'requester_id'
     private User requester;
     private LocalDateTime created;
     @Enumerated(EnumType.STRING)

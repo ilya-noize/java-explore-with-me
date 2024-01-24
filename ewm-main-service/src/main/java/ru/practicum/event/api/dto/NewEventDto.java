@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.practicum.location.entity.Location;
+import ru.practicum.location.dto.LocationDto;
 
 import javax.validation.constraints.Future;
 import javax.validation.constraints.NotBlank;
@@ -48,12 +48,12 @@ public class NewEventDto {
             max = MAX_EVENT_ANNOTATION_LENGTH,
             min = MIN_EVENT_ANNOTATION_LENGTH
     ) String annotation;
-    private @Size(
+    private @NotBlank @Size(
             max = MAX_EVENT_DESCRIPTION_LENGTH,
             min = MIN_EVENT_DESCRIPTION_LENGTH
     ) String description;
     private @NotNull Long category;
-    private @NotNull Location location;
+    private @NotNull LocationDto location;
     private Boolean paid;
     @JsonFormat(
             pattern = DATE_FORMAT

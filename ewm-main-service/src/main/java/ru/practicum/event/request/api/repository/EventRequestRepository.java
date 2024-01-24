@@ -6,8 +6,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.constants.Constants;
 import ru.practicum.event.entity.Event;
-import ru.practicum.event.request.api.service.EventRequestService;
 import ru.practicum.event.request.entity.EventRequest;
 import ru.practicum.user.entity.User;
 
@@ -20,7 +20,7 @@ public interface EventRequestRepository extends JpaRepository<EventRequest, Long
     @Query("update EventRequest e set e.status = :status " +
             "where e.id = :id and e.event = :event and e.requester = :requester")
     void eventRequestCancel(
-            @Param("status") EventRequestService.RequestState status,
+            @Param("status") Constants.RequestState status,
             @Param("id") Long id,
             @Param("event") Event event,
             @Param("requester") User requester);
@@ -29,5 +29,5 @@ public interface EventRequestRepository extends JpaRepository<EventRequest, Long
 
     List<EventRequest> getByEvent_Id(Long eventId);
 
-    int countByEvent_IdAndStatus(Long eventId, EventRequestService.RequestState status);
+    int countByEvent_IdAndStatus(Long eventId, Constants.RequestState status);
 }

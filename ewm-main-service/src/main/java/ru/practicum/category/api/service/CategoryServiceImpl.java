@@ -10,7 +10,7 @@ import ru.practicum.category.api.mapper.CategoryMapper;
 import ru.practicum.category.api.repository.CategoryRepository;
 import ru.practicum.category.entity.Category;
 import ru.practicum.event.api.repository.EventRepository;
-import ru.practicum.exception.ForbiddenException;
+import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 
 import java.util.List;
@@ -28,20 +28,29 @@ public class CategoryServiceImpl implements CategoryService {
     private final EventRepository eventRepository;
 
     @Override
-    public CategoryDto create(NewCategoryDto newDto) {
-        Category category = CategoryMapper.INSTANCE.toEntity(newDto);
+    public CategoryDto create(NewCategoryDto dto) {
+        isExistsName(dto.getName());
+        Category category = CategoryMapper.INSTANCE.toEntity(dto);
 
         return CategoryMapper.INSTANCE.toDto(
                 categoryRepository.save(category));
     }
 
     @Override
-    public CategoryDto update(Long id, NewCategoryDto newDto) {
+    public CategoryDto update(Long id, NewCategoryDto dto) {
         Category category = getCategory(id);
-        category.setName(newDto.getName());
+
+        String name = dto.getName();
+        category.setName(isExistsName(name));
 
         return CategoryMapper.INSTANCE.toDto(
                 categoryRepository.save(category));
+    }
+
+    private String isExistsName(String name) {
+        boolean isExistsName = categoryRepository.existsByNameIgnoreCase(name);
+        if (isExistsName) throw new ConflictException("Category with this name exists.");
+        return name;
     }
 
     @Override
@@ -71,7 +80,7 @@ public class CategoryServiceImpl implements CategoryService {
             throw new NotFoundException(format(CATEGORY_NOT_EXISTS, id));
         }
         if (eventRepository.countByCategory_Id(id) > 0) {
-            throw new ForbiddenException("There are events in the category.");
+            throw new ConflictException("There are events in the category.");
         }
         categoryRepository.deleteById(id);
         log.debug("[i][admin] The category (ID:{}) was successfully deleted.", id);

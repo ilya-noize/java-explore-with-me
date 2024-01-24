@@ -68,8 +68,8 @@ public class EventPrivateController {
     public EventDto updateByInitializerAndId(
             @PathVariable Long userId,
             @PathVariable Long eventId,
-            @Valid UpdateEventDto dto) {
-        log.debug("[i] Изменение добавленного события ID:{} текущим пользователем ID:{}", eventId, userId);
+            @RequestBody @Valid UpdateEventDto dto) {
+        log.debug("[i] Изменение добавленного события ID:{} текущим пользователем ID:{}\n DTO: {}", eventId, userId, dto);
 
         return service.updateByInitializerAndId(userId, eventId, dto);
     }

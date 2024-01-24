@@ -29,13 +29,14 @@ import ru.practicum.event.request.api.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.event.request.api.dto.EventRequestStatusUpdateResult;
 import ru.practicum.event.request.api.mapper.EventRequestMapper;
 import ru.practicum.event.request.api.repository.EventRequestRepository;
-import ru.practicum.event.request.api.service.EventRequestService;
 import ru.practicum.event.request.entity.EventRequest;
 import ru.practicum.exception.BadRequestException;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.ForbiddenException;
 import ru.practicum.exception.NotFoundException;
+import ru.practicum.location.dto.LocationDto;
 import ru.practicum.location.entity.Location;
+import ru.practicum.location.mapper.LocationMapper;
 import ru.practicum.location.repository.LocationRepository;
 import ru.practicum.service.StatisticService;
 import ru.practicum.user.api.repository.UserRepository;
@@ -43,6 +44,7 @@ import ru.practicum.user.entity.User;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -52,12 +54,13 @@ import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static ru.practicum.constants.Constants.CATEGORY_NOT_EXISTS;
+import static ru.practicum.constants.Constants.DATE_FORMAT;
 import static ru.practicum.constants.Constants.EVENT_NOT_EXISTS;
+import static ru.practicum.constants.Constants.RequestState.CONFIRMED;
+import static ru.practicum.constants.Constants.RequestState.PENDING;
+import static ru.practicum.constants.Constants.RequestState.REJECTED;
 import static ru.practicum.constants.Constants.USER_NOT_EXISTS;
 import static ru.practicum.constants.Constants.checkPageable;
-import static ru.practicum.event.request.api.service.EventRequestService.RequestState.CONFIRMED;
-import static ru.practicum.event.request.api.service.EventRequestService.RequestState.PENDING;
-import static ru.practicum.event.request.api.service.EventRequestService.RequestState.REJECTED;
 
 @Service
 @Slf4j
@@ -69,6 +72,12 @@ public class EventServiceImpl implements EventService {
     private final EventRequestRepository requestRepository;
     private final LocationRepository locationRepository;
     private final StatisticService statisticService;
+
+    private static void validateEventState(Constants.EventState eventState) {
+        if (eventState.equals(Constants.EventState.PUBLISHED)) {
+            throw new ConflictException("Event is published.");
+        }
+    }
 
     @Override
     public EventDto create(long userId, NewEventDto dto) {
@@ -85,6 +94,7 @@ public class EventServiceImpl implements EventService {
         event.setInitiator(initiator);
         event.setState(Constants.EventState.PENDING);
         event.setLocation(getLocation(dto.getLocation()));
+        event.setRequestModeration(true);
         event.setCreatedOn(LocalDateTime.now());
 
         return EventMapper.INSTANCE.toDto(
@@ -180,7 +190,7 @@ public class EventServiceImpl implements EventService {
         validateLimitRequests(participantLimit, limit);
 
         EventRequestStatusUpdateResult statusUpdateResponse = new EventRequestStatusUpdateResult();
-        EventRequestService.RequestState updateStatus = eventRequestStatusUpdateRequest.getStatus();
+        Constants.RequestState updateStatus = eventRequestStatusUpdateRequest.getStatus();
         for (EventRequest request : requests) {
             validateRequestStatus(request.getStatus());
             if (updateStatus.equals(CONFIRMED)) {
@@ -202,19 +212,13 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventDto eventAdministration(Long eventId, UpdateEventAdminDto dto) {
         Event event = getEvent(eventId);
-        LocalDateTime eventDate = event.getEventDate();
-        validateAdminTimeMoment(eventDate);
-
-        LocalDateTime newEventDate = dto.getEventDate();
-        validateAdminTimeMoment(newEventDate);
-
+        validateAdminTimeMoment(dto.getEventDate());
+        validateAdminTimeMoment(event.getEventDate());
+        validateEventState(event.getState());
         Constants.StateAdminAction stateAction = dto.getStateAction();
         Constants.EventState eventState = event.getState();
         event.setState(getModifyEventState(stateAction, eventState));
 
-        if (event.getState().equals(Constants.EventState.PUBLISHED)) {
-            event.setPublishedOn(LocalDateTime.now());
-        }
         updateTitleAnnotationDescriptionCategoryLocationPaidParticipantLimitModeration(event,
                 dto.getTitle(),
                 dto.getAnnotation(),
@@ -244,8 +248,8 @@ public class EventServiceImpl implements EventService {
         Pageable pageable = checkPageable(from, size, null);
         EventSpecification eventSpecification = new EventSpecification();
 
-        if (users != null) eventSpecification.add(getCriteriaListUsers(users));
-        if (categories != null) eventSpecification.add(getCriteriaListCategories(categories));
+        if (isSizeNotZeroAndIndexZeroNotZero(users)) eventSpecification.add(getCriteriaListUsers(users));
+        if (isSizeNotZeroAndIndexZeroNotZero(categories)) eventSpecification.add(getCriteriaListCategories(categories));
         if (states != null) eventSpecification.add(getCriteriaStates(states));
         if (rangeStart != null) eventSpecification.add(getCriteriaRangeStart(rangeStart));
         if (rangeFinish != null) eventSpecification.add(getCriteriaRangeFinish(rangeFinish));
@@ -257,6 +261,22 @@ public class EventServiceImpl implements EventService {
         return events.stream()
                 .map(EventMapper.INSTANCE::toDto)
                 .collect(toList());
+    }
+
+    /**
+     * patch request query like <u>?users=0&categories=0</u>
+     * <p>
+     * boolean b1 = users == List.of(0L);   // false    <br/>
+     * boolean b2 = !users.isEmpty();       // true     <br/>
+     * boolean b3 = users.size() != 0;      // true     <br/>
+     * boolean b4 = users.get(0) != 0;      // false    <br/>
+     *
+     * @param array Массив
+     * @return Размер не ноль и первый элемент не ноль
+     */
+    private boolean isSizeNotZeroAndIndexZeroNotZero(List<Long> array) {
+        if (array == null) return false;
+        return array.size() != 0 && array.get(0) != 0;
     }
 
     @Override
@@ -281,7 +301,8 @@ public class EventServiceImpl implements EventService {
             eventSpecification.add(getCriteriaTextInDescription(text));
         }
 
-        if (categories != null) eventSpecification.add(getCriteriaListCategories(categories));
+        System.out.println("categories = " + categories);
+        if (isSizeNotZeroAndIndexZeroNotZero(categories)) eventSpecification.add(getCriteriaListCategories(categories));
         if (paid != null) eventSpecification.add(getCriteriaPaid(paid));
         if (rangeStart != null) eventSpecification.add(getCriteriaRangeStart(rangeStart));
         if (rangeFinish != null) eventSpecification.add(getCriteriaRangeFinish(rangeFinish));
@@ -301,7 +322,6 @@ public class EventServiceImpl implements EventService {
                 .map(EventMapper.INSTANCE::toShortDto)
                 .collect(toList());
     }
-
 
     @Override
     public EventDto get(Long eventId, HttpServletRequest httpRequest) {
@@ -414,8 +434,9 @@ public class EventServiceImpl implements EventService {
                         new NotFoundException(format(EVENT_NOT_EXISTS, eventId)));
     }
 
-    private Location getLocation(Location location) {
-        if (location != null) {
+    private Location getLocation(LocationDto dto) {
+        if (dto != null) {
+            Location location = LocationMapper.INSTANCE.toEntity(dto);
             double lat = location.getLat();
             double lon = location.getLon();
             return locationRepository.getByLatAndLon(lat, lon)
@@ -431,12 +452,12 @@ public class EventServiceImpl implements EventService {
         switch (stateAction) {
             case PUBLISH_EVENT:
                 if (eventState != Constants.EventState.PENDING) {
-                    throw new ForbiddenException(format(eventStateErrorMessage, eventState));
+                    throw new ConflictException(format(eventStateErrorMessage, eventState));
                 }
                 return Constants.EventState.PUBLISHED;
             case REJECT_EVENT:
                 if (eventState == Constants.EventState.PUBLISHED) {
-                    throw new ForbiddenException(format(eventStateErrorMessage, eventState));
+                    throw new ConflictException(format(eventStateErrorMessage, eventState));
                 }
                 return Constants.EventState.CANCELED;
             default:
@@ -508,7 +529,7 @@ public class EventServiceImpl implements EventService {
         }
     }
 
-    private void validateRequestStatus(EventRequestService.RequestState status) {
+    private void validateRequestStatus(Constants.RequestState status) {
         if (!status.equals(PENDING)) {
             throw new ForbiddenException((format("Wrong request state: %s", status)));
         }
@@ -516,15 +537,19 @@ public class EventServiceImpl implements EventService {
 
     private void validateAdminTimeMoment(LocalDateTime eventDate) {
         String error;
-        if (eventDate == null) {
-            throw new ForbiddenException("eventDate is null");
-        }
+        if (eventDate != null) {
+//            throw new ForbiddenException("eventDate is null");
+//        }
 
-        int minutesBeforeModified = 60;
-        if (LocalDateTime.now()
-                .isBefore(eventDate.plusMinutes(minutesBeforeModified))) {
-            error = format("Event date (%td) not before %d minutes", eventDate, minutesBeforeModified);
-            throw new ForbiddenException(error);
+            int minutesBeforeModified = 60;
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime timeLimit = now.minusMinutes(minutesBeforeModified);
+            if (eventDate.isBefore(timeLimit)) {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
+                String date = String.format(formatter.format(eventDate));
+                error = format("Event date (%s) not before %d minutes", date, minutesBeforeModified);
+                throw new BadRequestException(error);
+            }
         }
     }
 
@@ -551,30 +576,16 @@ public class EventServiceImpl implements EventService {
     }
 
     private SearchCriteria getCriteriaPaid(Boolean paid) {
-        if (paid != null) {
-
-            return new SearchCriteria("paid", paid, SearchOperation.EQUAL);
-        }
-
-        return null;
+        return new SearchCriteria("paid", paid, SearchOperation.EQUAL);
     }
 
     private SearchCriteria getCriteriaRangeStart(LocalDateTime rangeStart) {
-        if (rangeStart != null) {
 
-            return new SearchCriteria("eventDate", rangeStart, SearchOperation.GREATER_THAN_EQUAL);
-        }
-
-        return null;
+        return new SearchCriteria("eventDate", rangeStart, SearchOperation.GREATER_THAN_EQUAL);
     }
 
     private SearchCriteria getCriteriaRangeFinish(LocalDateTime rangeFinish) {
-        if (rangeFinish != null) {
-
-            return new SearchCriteria("eventDate", rangeFinish, SearchOperation.LESS_THAN);
-        }
-
-        return null;
+        return new SearchCriteria("eventDate", rangeFinish, SearchOperation.LESS_THAN);
     }
 
     private SearchCriteria getCriteriaParticipantLimitNotDefined() {

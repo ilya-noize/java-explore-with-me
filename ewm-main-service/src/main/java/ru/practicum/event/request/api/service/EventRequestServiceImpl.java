@@ -21,10 +21,10 @@ import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static ru.practicum.constants.Constants.EVENT_NOT_EXISTS;
 import static ru.practicum.constants.Constants.EVENT_REQUEST_NOT_EXISTS;
-import static ru.practicum.event.request.api.service.EventRequestService.RequestState.CANCELED;
+import static ru.practicum.constants.Constants.RequestState.CANCELED;
 import static ru.practicum.constants.Constants.USER_NOT_EXISTS;
 import static ru.practicum.constants.Constants.checkPageable;
-import static ru.practicum.event.request.api.service.EventRequestService.RequestState.PENDING;
+import static ru.practicum.constants.Constants.RequestState.PENDING;
 
 @RestController
 @Slf4j

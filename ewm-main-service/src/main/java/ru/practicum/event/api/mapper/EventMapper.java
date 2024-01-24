@@ -10,6 +10,7 @@ import ru.practicum.event.api.dto.NewEventDto;
 import ru.practicum.event.entity.Event;
 import ru.practicum.event.request.api.mapper.EventRequestMapper;
 import ru.practicum.event.request.entity.EventRequest;
+import ru.practicum.location.mapper.LocationMapper;
 import ru.practicum.user.api.mapper.UserMapper;
 
 import javax.validation.constraints.NotNull;
@@ -18,7 +19,7 @@ import java.util.List;
 @Mapper(uses = {
         UserMapper.class,
         EventRequestMapper.class,
-//        LocationMapper.class,
+        LocationMapper.class,
         CategoryMapper.class
 })
 public interface EventMapper {

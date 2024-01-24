@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import ru.practicum.event.request.api.service.EventRequestService.RequestState;
+import ru.practicum.constants.Constants.RequestState;
 
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class EventRequestDto {
     private @NotNull long id;
-    private @NotNull LocalDateTime created;
+    private LocalDateTime created;
     private @NotNull long event;
     private @NotNull long requester;
     private @NotNull RequestState status;

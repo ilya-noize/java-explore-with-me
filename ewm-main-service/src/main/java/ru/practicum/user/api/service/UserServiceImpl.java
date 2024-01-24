@@ -3,6 +3,7 @@ package ru.practicum.user.api.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.user.api.dto.NewUserDto;
 import ru.practicum.user.api.dto.UserDto;
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static java.util.stream.Collectors.toList;
 import static ru.practicum.constants.Constants.USER_NOT_EXISTS;
+import static ru.practicum.constants.Constants.checkPageable;
 
 @Slf4j
 @Service
@@ -22,11 +24,25 @@ public class UserServiceImpl implements UserService {
     private final UserRepository repository;
 
     @Override
-    public UserDto create(NewUserDto newDto) {
+    public UserDto create(NewUserDto dto) {
         log.debug("[i] create user");
-        User user = UserMapper.INSTANCE.toEntity(newDto);
+        User user = User.builder()
+                .name(isExistsName(dto.getName()))
+                .email(isExistsEmail(dto.getEmail())).build();
 
         return UserMapper.INSTANCE.toDto(repository.save(user));
+    }
+
+    private String isExistsEmail(String email) {
+        boolean isExists = repository.existsByEmailIgnoreCase(email);
+        if (isExists) throw new ConflictException("User with this email exists.");
+        return email;
+    }
+
+    private String isExistsName(String name) {
+        boolean isExists = repository.existsByNameIgnoreCase(name);
+        if (isExists) throw new ConflictException("User with this name exists.");
+        return name;
     }
 
     @Override
@@ -34,7 +50,7 @@ public class UserServiceImpl implements UserService {
         log.debug("[i] get users from");
         List<User> allUsersByIds;
         if (ids == null) {
-            allUsersByIds = repository.findAll();
+            allUsersByIds = repository.findAll(checkPageable(from, size, null)).toList();
         } else {
             allUsersByIds = repository.findAllById(ids);
         }

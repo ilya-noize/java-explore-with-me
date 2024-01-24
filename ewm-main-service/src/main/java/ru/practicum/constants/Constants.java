@@ -9,6 +9,9 @@ import ru.practicum.exception.BadRequestException;
 
 public interface Constants {
 
+    int MIN_COMPILATION_TITLE_LENGTH = 3;
+    int MAX_COMPILATION_TITLE_LENGTH = 50;
+
     int MIN_EVENT_TITLE_LENGTH = 3;
     int MAX_EVENT_TITLE_LENGTH = 120;
     int MIN_EVENT_ANNOTATION_LENGTH = 20;
@@ -89,5 +92,15 @@ public interface Constants {
     enum StateAction {
         SEND_TO_REVIEW,
         CANCEL_REVIEW
+    }
+
+    /**
+     * Состояние запроса пользователя на участие в событии для участника
+     */
+    enum RequestState {
+        PENDING,
+        CONFIRMED,
+        REJECTED,
+        CANCELED
     }
 }
