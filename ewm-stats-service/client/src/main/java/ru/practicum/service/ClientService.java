@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import ru.practicum.HitDto;
 import ru.practicum.ViewStatsDto;
-import ru.practicum.client.Client;
+import ru.practicum.client.HttpClient;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class ClientService extends Client {
+public class ClientService extends HttpClient {
     private static final String API_PREFIX = "/";
     public static final String PATTERN = "yyyy-MM-dd HH:mm:ss";
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(PATTERN);

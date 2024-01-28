@@ -174,7 +174,7 @@ public class ExceptionController {
         logError(INTERNAL_SERVER_ERROR, allErrors[0].toString(), e);
 
         return ApiError.builder()
-                .description("Throwable")
+                .description("Illegal Argument")
                 .errors(Collections.singletonList(Arrays.toString(allErrors)))
                 .message(e.getMessage())
                 .reason(e.getClass().getName())

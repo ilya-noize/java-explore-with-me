@@ -317,7 +317,6 @@ public class EventServiceImpl implements EventService {
             eventSpecification.add(getCriteriaTextInDescription(text));
         }
 
-        System.out.println("categories = " + categories);
         if (isSizeNotZeroAndIndexZeroNotZero(categories)) {
             eventSpecification.add(getCriteriaListCategories(categories));
         }
@@ -330,28 +329,16 @@ public class EventServiceImpl implements EventService {
         if (rangeFinish != null) {
             eventSpecification.add(getCriteriaRangeFinish(rangeFinish));
         }
-        boolean isOnlyAvailable = onlyAvailable != null && onlyAvailable;
-        if (isOnlyAvailable) eventSpecification.add(getCriteriaParticipantLimitNotDefined());
+        if (onlyAvailable != null && onlyAvailable) {
+            eventSpecification.add(getCriteriaParticipantLimitNotDefined());
+        }
         List<Event> events = getEventsBySpecs(eventSpecification, pageable);
 
-//        return events.stream()
-//                .filter(event -> {
-//                    if (isOnlyAvailable && event.getParticipantLimit() != 0) {
-//                        addHit(httpServletRequest);
-//                        return event.getParticipantLimit() > event.getConfirmedRequests().size();
-//                    }
-//                    addHit(httpServletRequest);
-//                    return true;
-//                })
-//                .map(EventMapper.INSTANCE::toShortDto)
-//                .collect(toList());
-
         addHit(httpServletRequest);
-        events.forEach(event -> {
+        events.forEach( event -> {
             long views = event.getViews() + 1;
             event.setViews(views);
         });
-
         eventRepository.saveAll(events);
 
         return events.stream()
@@ -524,7 +511,7 @@ public class EventServiceImpl implements EventService {
      * 409 - Conflict if event limit equals limit current time
      *
      * @param eventParticipantLimit event limit
-     * @param countEventRequests    now limit
+     * @param countEventRequests            now limit
      */
     private void validateLimitRequests(int eventParticipantLimit,
                                        int countEventRequests) {
