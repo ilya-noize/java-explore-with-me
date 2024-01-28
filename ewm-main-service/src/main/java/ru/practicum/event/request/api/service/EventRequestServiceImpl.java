@@ -10,7 +10,6 @@ import ru.practicum.event.request.api.dto.EventRequestDto;
 import ru.practicum.event.request.api.mapper.EventRequestMapper;
 import ru.practicum.event.request.api.repository.EventRequestRepository;
 import ru.practicum.event.request.entity.EventRequest;
-import ru.practicum.exception.BadRequestException;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.user.api.repository.UserRepository;
@@ -68,7 +67,7 @@ public class EventRequestServiceImpl implements EventRequestService {
         int limit = event.getParticipantLimit();
         int confirmedRequests = event.getConfirmedRequests().size();
         if (confirmedRequests == limit && limit != 0) {
-            throw new BadRequestException("The event has reached the limit of participation requests.");
+            throw new ConflictException("The event has reached the limit of participation requests.");
         }
         EventRequest request = EventRequest.builder()
                 .created(LocalDateTime.now())
