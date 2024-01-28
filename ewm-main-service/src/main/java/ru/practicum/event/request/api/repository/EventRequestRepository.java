@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface EventRequestRepository extends JpaRepository<EventRequest, Long> {
+    boolean existsByRequester_IdAndEvent_Id(Long userId, Long eventId);
+
     @Transactional
     @Modifying
     @Query("update EventRequest e set e.status = :status " +

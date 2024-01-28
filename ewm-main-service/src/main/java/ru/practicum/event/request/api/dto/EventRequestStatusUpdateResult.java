@@ -1,19 +1,16 @@
 package ru.practicum.event.request.api.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
-@AllArgsConstructor
 public class EventRequestStatusUpdateResult {
-    private List<EventRequestDto> confirmedRequests;
-    private List<EventRequestDto> rejectedRequests;
+    private final List<EventRequestDto> confirmedRequests = new ArrayList<>();
+    private final List<EventRequestDto> rejectedRequests = new ArrayList<>();
 }

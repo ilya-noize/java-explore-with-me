@@ -3,12 +3,14 @@ package ru.practicum.event.request.api.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RestController;
+import ru.practicum.constants.Constants;
 import ru.practicum.event.api.repository.EventRepository;
 import ru.practicum.event.entity.Event;
 import ru.practicum.event.request.api.dto.EventRequestDto;
 import ru.practicum.event.request.api.mapper.EventRequestMapper;
 import ru.practicum.event.request.api.repository.EventRequestRepository;
 import ru.practicum.event.request.entity.EventRequest;
+import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.user.api.repository.UserRepository;
 import ru.practicum.user.entity.User;
@@ -22,9 +24,10 @@ import static java.util.stream.Collectors.toList;
 import static ru.practicum.constants.Constants.EVENT_NOT_EXISTS;
 import static ru.practicum.constants.Constants.EVENT_REQUEST_NOT_EXISTS;
 import static ru.practicum.constants.Constants.RequestState.CANCELED;
+import static ru.practicum.constants.Constants.RequestState.CONFIRMED;
+import static ru.practicum.constants.Constants.RequestState.PENDING;
 import static ru.practicum.constants.Constants.USER_NOT_EXISTS;
 import static ru.practicum.constants.Constants.checkPageable;
-import static ru.practicum.constants.Constants.RequestState.PENDING;
 
 @RestController
 @Slf4j
@@ -47,14 +50,30 @@ public class EventRequestServiceImpl implements EventRequestService {
     }
 
     @Override
-    public EventRequestDto createRequest(EventRequestDto dto) {
-        User requester = validateUser(dto.getRequester());
-        Event event = validateEvent(dto.getEvent());
+    public EventRequestDto createRequest(long userId, long eventId) {
+        User requester = validateUser(userId);
+        Event event = validateEvent(eventId);
+        if (userId == event.getInitiator().getId()) {
+            throw new ConflictException("The initiator of the event cannot submit a request " +
+                    "to participate in his event");
+        }
+        if (requestRepository.existsByRequester_IdAndEvent_Id(userId, eventId)) {
+            throw new ConflictException(format("The user's (ID:%d) request " +
+                    "to participate in the user's event (ID:%d) exists", userId, eventId));
+        }
+        if (!event.getState().equals(Constants.EventState.PUBLISHED)) {
+            throw new ConflictException("Cannot participate in an unpublished event");
+        }
+        int limit = event.getParticipantLimit();
+        int confirmedRequests = event.getConfirmedRequests().size();
+        if (confirmedRequests == limit) {
+            throw new ConflictException("The event has reached the limit of participation requests.");
+        }
         EventRequest request = EventRequest.builder()
                 .created(LocalDateTime.now())
                 .event(event)
                 .requester(requester)
-                .status(PENDING)
+                .status(event.isRequestModeration() ? PENDING : CONFIRMED)
                 .build();
 
         return EventRequestMapper.INSTANCE.toDto(

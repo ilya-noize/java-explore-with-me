@@ -17,14 +17,16 @@ import ru.practicum.exception.entity.ApiError;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toList;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @RestControllerAdvice
@@ -48,7 +50,7 @@ public class ExceptionController {
         List<ObjectError> allErrors = result.getAllErrors();
         List<String> errors = allErrors.stream()
                 .map(ObjectError::toString)
-                .collect(Collectors.toList());
+                .collect(toList());
 
         logError(BAD_REQUEST, allErrors.get(0).getDefaultMessage(), e);
 
@@ -126,6 +128,40 @@ public class ExceptionController {
                 .message(message)
                 .reason("Access is denied.")
                 .status(FORBIDDEN)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    @ExceptionHandler(NullPointerException.class)
+    @ResponseStatus(INTERNAL_SERVER_ERROR)
+    public ApiError handleNullPointerException(NullPointerException e) {
+        StackTraceElement[] allErrors = e.getStackTrace();
+
+        logError(INTERNAL_SERVER_ERROR, allErrors[0].toString(), e);
+
+        return ApiError.builder()
+                .description("Null Pointer")
+                .errors(Collections.singletonList(Arrays.toString(allErrors)))
+                .message(e.getMessage())
+                .reason(e.getClass().getName())
+                .status(INTERNAL_SERVER_ERROR)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(INTERNAL_SERVER_ERROR)
+    public ApiError handleIllegalArgumentException(IllegalArgumentException e) {
+        StackTraceElement[] allErrors = e.getStackTrace();
+
+        logError(INTERNAL_SERVER_ERROR, allErrors[0].toString(), e);
+
+        return ApiError.builder()
+                .description("Illegal Argument")
+                .errors(Collections.singletonList(Arrays.toString(allErrors)))
+                .message(e.getMessage())
+                .reason(e.getClass().getName())
+                .status(INTERNAL_SERVER_ERROR)
                 .timestamp(LocalDateTime.now())
                 .build();
     }

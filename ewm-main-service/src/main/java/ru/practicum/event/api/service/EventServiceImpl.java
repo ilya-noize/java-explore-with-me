@@ -94,7 +94,7 @@ public class EventServiceImpl implements EventService {
         event.setInitiator(initiator);
         event.setState(Constants.EventState.PENDING);
         event.setLocation(getLocation(dto.getLocation()));
-        event.setRequestModeration(true);
+        event.setRequestModeration(dto.getRequestModeration());
         event.setCreatedOn(LocalDateTime.now());
 
         return EventMapper.INSTANCE.toDto(
@@ -130,7 +130,7 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new NotFoundException(EVENT_NOT_EXISTS));
         Constants.EventState eventState = event.getState();
         if (eventState.equals(Constants.EventState.PUBLISHED)) {
-            throw new ForbiddenException(format("Wrong event state: %s", eventState));
+            throw new ConflictException("Can only change canceled events or events in the waiting state of moderation");
         }
 
         LocalDateTime newEventDate = dto.getEventDate();
@@ -185,25 +185,34 @@ public class EventServiceImpl implements EventService {
         validateConfirmation(event);
         List<Long> requestIds = eventRequestStatusUpdateRequest.getRequestIds();
         List<EventRequest> requests = requestRepository.findAllById(requestIds);
-        int limit = requestRepository.countByEvent_IdAndStatus(eventId, CONFIRMED);
-        int participantLimit = event.getParticipantLimit();
-        validateLimitRequests(participantLimit, limit);
+        if (requestIds.size() != requests.size()) {
+            throw new BadRequestException("There are non-existent queries in the list");
+        }
+        int countEventRequests = requestRepository.countByEvent_IdAndStatus(eventId, CONFIRMED);
+        int eventParticipantLimit = event.getParticipantLimit();
+        validateLimitRequests(eventParticipantLimit, countEventRequests);
 
         EventRequestStatusUpdateResult statusUpdateResponse = new EventRequestStatusUpdateResult();
         Constants.RequestState updateStatus = eventRequestStatusUpdateRequest.getStatus();
         for (EventRequest request : requests) {
             validateRequestStatus(request.getStatus());
+
             if (updateStatus.equals(CONFIRMED)) {
-                if (limit < participantLimit) {
+                if (countEventRequests <= eventParticipantLimit) {
                     request.setStatus(CONFIRMED);
-                    limit++;
+                    countEventRequests++;
+                    statusUpdateResponse.getConfirmedRequests()
+                            .add(EventRequestMapper.INSTANCE.toDto(request));
                 } else {
                     request.setStatus(REJECTED);
+                    statusUpdateResponse.getRejectedRequests()
+                            .add(EventRequestMapper.INSTANCE.toDto(request));
                 }
             } else {
                 request.setStatus(REJECTED);
+                statusUpdateResponse.getRejectedRequests()
+                        .add(EventRequestMapper.INSTANCE.toDto(request));
             }
-            statusUpdateResponse.getConfirmedRequests().add(EventRequestMapper.INSTANCE.toDto(request));
         }
         requestRepository.saveAll(requests);
         return statusUpdateResponse;
@@ -336,7 +345,7 @@ public class EventServiceImpl implements EventService {
     }
 
     private List<Event> getEventsBySpecs(EventSpecification eventSpecification, Pageable pageable) {
-        if (eventSpecification.getList() != null) {
+        if (eventSpecification.getList().isEmpty()) {
 
             return eventRepository.findAll(eventSpecification, pageable).toList();
         } else {
@@ -501,14 +510,14 @@ public class EventServiceImpl implements EventService {
     /**
      * 409 - Conflict if event limit equals limit current time
      *
-     * @param participantLimit event limit
-     * @param limit            now limit
+     * @param eventParticipantLimit event limit
+     * @param countEventRequests            now limit
      */
-    private void validateLimitRequests(int participantLimit,
-                                       int limit) {
-        if (participantLimit == limit) {
-            throw new ConflictException("it is not possible to confirm the application " +
-                    "if the limit on applications for this event has already been reached");
+    private void validateLimitRequests(int eventParticipantLimit,
+                                       int countEventRequests) {
+        if (eventParticipantLimit < countEventRequests) {
+            throw new ConflictException("it is not possible to confirm the request " +
+                    "if the limit on requests for this event has already been reached");
         }
     }
 

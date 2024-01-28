@@ -7,7 +7,7 @@ import java.util.List;
 public interface EventRequestService {
     List<EventRequestDto> getAllRequests(Long userId, Integer from, Integer size);
 
-    EventRequestDto createRequest(EventRequestDto dto);
+    EventRequestDto createRequest(long userId, long eventId);
 
     EventRequestDto cancelRequest(EventRequestDto dto);
 }

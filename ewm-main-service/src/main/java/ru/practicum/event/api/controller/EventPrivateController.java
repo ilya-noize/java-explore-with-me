@@ -41,7 +41,7 @@ public class EventPrivateController {
             @PathVariable Long userId,
             @RequestParam(required = false, defaultValue = FROM) @Min(0) Integer from,
             @RequestParam(required = false, defaultValue = SIZE) @Min(1) Integer size) {
-        log.debug("[i] Получение событий, добавленных текущим пользователем ID:{}", userId);
+        log.debug("[i] get events by user ID:{}", userId);
 
         return service.getByInitializer(userId, from, size);
     }
@@ -50,7 +50,7 @@ public class EventPrivateController {
     @ResponseStatus(HttpStatus.CREATED)
     public EventDto create(@PathVariable Long userId,
                            @RequestBody @Valid NewEventDto dto) {
-        log.info("[i] Добавление нового события \ndto:{}", dto);
+        log.debug("[i] create new event \ndto:{}", dto);
 
         return service.create(userId, dto);
     }
@@ -58,8 +58,7 @@ public class EventPrivateController {
     @GetMapping({"/users/{userId}/events/{eventId}"})
     public EventDto getByInitializerAndId(@PathVariable Long userId,
                                           @PathVariable Long eventId) {
-        log.debug("[i] Получение полной информации о добавленном событии ID:{} " +
-                "текущим пользователем ID:{}", eventId, userId);
+        log.debug("[i] get user's (ID:{}) event by ID:{} ", userId, eventId);
 
         return service.getByInitializerAndId(userId, eventId);
     }
@@ -69,7 +68,7 @@ public class EventPrivateController {
             @PathVariable Long userId,
             @PathVariable Long eventId,
             @RequestBody @Valid UpdateEventDto dto) {
-        log.debug("[i] Изменение добавленного события ID:{} текущим пользователем ID:{}\n DTO: {}", eventId, userId, dto);
+        log.debug("[i] update user's (ID:{}) event by ID:{}\n DTO: {}", userId, eventId, dto);
 
         return service.updateByInitializerAndId(userId, eventId, dto);
     }
@@ -77,8 +76,7 @@ public class EventPrivateController {
     @GetMapping({"/users/{userId}/events/{eventId}/requests"})
     public List<EventRequestDto> getRequestsInEvent(@PathVariable Long userId,
                                                     @PathVariable Long eventId) {
-        log.debug("[i] Получение информации о запросах на участие в событии ID:{} " +
-                "текущего пользователя ID:{}", eventId, userId);
+        log.debug("[i] get requests for user's (ID:{}) event by ID:{}", userId, eventId);
 
         return service.getRequestsInEvent(userId, eventId);
     }
@@ -88,8 +86,7 @@ public class EventPrivateController {
             @PathVariable Long userId,
             @PathVariable Long eventId,
             @RequestBody EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest) {
-        log.debug("[i] Изменение статуса (подтверждена, отменена) " +
-                "заявок на участие в событии ID:{} текущего пользователя ID:{}", eventId, userId);
+        log.debug("[i] update state by requests for user's (ID:{}) event by ID:{}", eventId, userId);
 
         return service.updateRequestsInEvent(userId, eventId, eventRequestStatusUpdateRequest);
     }

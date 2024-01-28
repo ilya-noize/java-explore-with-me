@@ -2,6 +2,7 @@ package ru.practicum.event.api.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,6 +16,7 @@ import javax.validation.constraints.Min;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static ru.practicum.constants.Constants.DATE_FORMAT;
 import static ru.practicum.constants.Constants.FROM;
 import static ru.practicum.constants.Constants.SIZE;
 
@@ -52,8 +54,10 @@ public class EventController {
             @RequestParam(required = false) String text,
             @RequestParam(required = false) List<Long> categories,
             @RequestParam(required = false) Boolean paid,
-            @RequestParam(required = false) LocalDateTime rangeStart,
-            @RequestParam(required = false) LocalDateTime rangeEnd,
+            @RequestParam(required = false)
+            @DateTimeFormat(fallbackPatterns = DATE_FORMAT) LocalDateTime rangeStart,
+            @RequestParam(required = false)
+            @DateTimeFormat(fallbackPatterns = DATE_FORMAT) LocalDateTime rangeEnd,
             @RequestParam(required = false) Boolean onlyAvailable,
             @RequestParam(required = false) String sort,
             @RequestParam(required = false, defaultValue = FROM) @Min(0) Integer from,

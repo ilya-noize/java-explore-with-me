@@ -1,5 +1,6 @@
 package ru.practicum.event.request.api.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -10,6 +11,8 @@ import ru.practicum.constants.Constants.RequestState;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
+import static ru.practicum.constants.Constants.DATE_FORMAT;
+
 
 @Getter
 @Setter
@@ -18,6 +21,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class EventRequestDto {
     private @NotNull long id;
+    @JsonFormat(
+            pattern = DATE_FORMAT
+    )
     private LocalDateTime created;
     private @NotNull long event;
     private @NotNull long requester;

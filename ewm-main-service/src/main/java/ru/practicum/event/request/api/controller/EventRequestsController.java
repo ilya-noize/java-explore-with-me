@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.event.request.api.dto.EventRequestDto;
 import ru.practicum.event.request.api.service.EventRequestService;
 
-import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import java.util.List;
 
@@ -39,11 +38,10 @@ public class EventRequestsController {
     @PostMapping({"/users/{userId}/requests"})
     @ResponseStatus(HttpStatus.CREATED)
     public EventRequestDto createRequest(@PathVariable Long userId,
-                                         @RequestBody @Valid EventRequestDto dto) {
+                                         @RequestParam Long eventId) {
         log.debug("[i] Добавление запроса от текущего пользователя ID:{} " +
-                "на участие в событии ID:{}", userId, dto.getEvent());
-        dto.setRequester(userId);
-        return service.createRequest(dto);
+                "на участие в событии ID:{}", userId, eventId);
+        return service.createRequest(userId, eventId);
     }
 
     @PatchMapping({"/users/{userId}/requests/{requestId}/cancel"})
