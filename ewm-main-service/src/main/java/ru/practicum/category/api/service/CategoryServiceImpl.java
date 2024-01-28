@@ -39,30 +39,20 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryDto update(Long id, NewCategoryDto dto) {
         Category category = getCategory(id);
-
-        String name = dto.getName();
-        category.setName(isExistsName(name));
+        String categoryName = category.getName();
+        String dtoName = dto.getName();
+        if (!categoryName.equals(dtoName)) {
+            category.setName(isExistsName(dtoName));
+        }
 
         return CategoryMapper.INSTANCE.toDto(
                 categoryRepository.save(category));
-    }
-
-    private String isExistsName(String name) {
-        boolean isExistsName = categoryRepository.existsByNameIgnoreCase(name);
-        if (isExistsName) throw new ConflictException("Category with this name exists.");
-        return name;
     }
 
     @Override
     public CategoryDto get(Long id) {
 
         return CategoryMapper.INSTANCE.toDto(getCategory(id));
-    }
-
-    private Category getCategory(Long id) {
-        return categoryRepository.findById(id)
-                .orElseThrow(() ->
-                        new NotFoundException(format(CATEGORY_NOT_EXISTS, id)));
     }
 
     @Override
@@ -84,5 +74,17 @@ public class CategoryServiceImpl implements CategoryService {
         }
         categoryRepository.deleteById(id);
         log.debug("[i][admin] The category (ID:{}) was successfully deleted.", id);
+    }
+
+    private Category getCategory(Long id) {
+        return categoryRepository.findById(id)
+                .orElseThrow(() ->
+                        new NotFoundException(format(CATEGORY_NOT_EXISTS, id)));
+    }
+
+    private String isExistsName(String name) {
+        boolean isExistsName = categoryRepository.existsByNameIgnoreCase(name);
+        if (isExistsName) throw new ConflictException("Category with this name exists.");
+        return name;
     }
 }

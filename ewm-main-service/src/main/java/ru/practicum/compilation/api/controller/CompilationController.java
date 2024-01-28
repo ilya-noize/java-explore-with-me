@@ -62,10 +62,10 @@ public class CompilationController {
         return service.getAll(from, size);
     }
 
-    @DeleteMapping({"/admin/compilations/{id}"})
-    public void remove(@PathVariable Long id) {
-        log.debug("[i][admin] remove compilation ID:{}", id);
-
-        service.remove(id);
+    @DeleteMapping({"/admin/compilations/{compId}"})
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void remove(@PathVariable Long compId) {
+        log.debug("[i][admin] remove compilation ID:{}", compId);
+        service.remove(compId);
     }
 }

@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,28 +29,34 @@ public class EventRequestsController {
             @PathVariable Long userId,
             @RequestParam(defaultValue = "0") @Min(0L) Integer from,
             @RequestParam(defaultValue = "10") @Min(1L) Integer size) {
-        log.debug("[i] Получение информации о заявках текущего пользователя ID:{} " +
-                "на участие в чужих событиях", userId);
-        return service.getAllRequests(userId, from, size);
+        log.debug("[i] Getting information about requests of the current user ID:{} " +
+                "to participate in other people's events", userId);
+        List<EventRequestDto> response = service.getAllRequests(userId, from, size);
+        log.debug("[✓] Information about the current user's requests has been received:");
+
+        return response;
     }
 
     @PostMapping({"/users/{userId}/requests"})
     @ResponseStatus(HttpStatus.CREATED)
     public EventRequestDto createRequest(@PathVariable Long userId,
                                          @RequestParam Long eventId) {
-        log.debug("[i] Добавление запроса от текущего пользователя ID:{} " +
-                "на участие в событии ID:{}", userId, eventId);
-        return service.createRequest(userId, eventId);
+        log.debug("[i] Adding a request from the current user ID:{} \n" +
+                " to participate in the event ID:{}", userId, eventId);
+        EventRequestDto response = service.createRequest(userId, eventId);
+        log.debug("[✓] The request has been added.");
+
+        return response;
     }
 
     @PatchMapping({"/users/{userId}/requests/{requestId}/cancel"})
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseStatus(HttpStatus.OK)
     public EventRequestDto cancelRequest(@PathVariable Long userId,
-                              @PathVariable Long requestId,
-                              @RequestBody EventRequestDto dto) {
-        dto.setId(requestId);
-        dto.setRequester(userId);
+                                         @PathVariable Long requestId) {
+        log.debug("[i] Canceling your request to participate in the event");
+        EventRequestDto response = service.cancelRequest(userId, requestId);
+        log.debug("[✓] The request been cancelled");
 
-        return service.cancelRequest(dto);
+        return response;
     }
 }

@@ -82,10 +82,8 @@ public class CompilationServiceImpl implements CompilationService {
 
     @Override
     public void remove(Long id) {
-        if (compilationRepository.removeById(id) == 0) {
-            throw new NotFoundException(format(COMPILATION_NOT_EXISTS, id));
-        }
-        log.debug("[i][admin] The compilation (ID:{}) was successfully deleted.", id);
+        compilationRepository.deleteById(id);
+        log.debug("[✓][admin] The compilation (ID:{}) was successfully deleted.", id);
     }
 
     private String isExistsTitle(String title) {

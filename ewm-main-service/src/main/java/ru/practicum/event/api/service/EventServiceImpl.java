@@ -53,6 +53,7 @@ import java.util.Optional;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
+import static org.springframework.data.domain.Sort.Direction.DESC;
 import static ru.practicum.constants.Constants.CATEGORY_NOT_EXISTS;
 import static ru.practicum.constants.Constants.DATE_FORMAT;
 import static ru.practicum.constants.Constants.EVENT_NOT_EXISTS;
@@ -94,8 +95,13 @@ public class EventServiceImpl implements EventService {
         event.setInitiator(initiator);
         event.setState(Constants.EventState.PENDING);
         event.setLocation(getLocation(dto.getLocation()));
-        event.setRequestModeration(dto.getRequestModeration());
         event.setCreatedOn(LocalDateTime.now());
+        Boolean paid = dto.getPaid();
+        event.setPaid(paid != null && paid);
+        Integer participantLimit = dto.getParticipantLimit();
+        event.setParticipantLimit(participantLimit == null ? 0 : participantLimit);
+        Boolean requestModeration = dto.getRequestModeration();
+        event.setRequestModeration(requestModeration == null || requestModeration);
 
         return EventMapper.INSTANCE.toDto(
                 eventRepository.save(event));
@@ -254,7 +260,7 @@ public class EventServiceImpl implements EventService {
                 users, states, categories, rangeStart, rangeFinish, from, size);
 
         validateRange(rangeStart, rangeFinish);
-        Pageable pageable = checkPageable(from, size, null);
+        Pageable pageable = checkPageable(from, size, Sort.by(DESC, "id"));
         EventSpecification eventSpecification = new EventSpecification();
 
         if (isSizeNotZeroAndIndexZeroNotZero(users)) eventSpecification.add(getCriteriaListUsers(users));
@@ -458,6 +464,7 @@ public class EventServiceImpl implements EventService {
                                                      Constants.EventState eventState) {
         String eventStateErrorMessage = "The event was moderated. " +
                 "Current status of the event: %s";
+        if (stateAction == null) return Constants.EventState.PUBLISHED;
         switch (stateAction) {
             case PUBLISH_EVENT:
                 if (eventState != Constants.EventState.PENDING) {
@@ -502,7 +509,7 @@ public class EventServiceImpl implements EventService {
         int minutesBeforeModifiedForInitiator = 120;
         LocalDateTime timeLimit = LocalDateTime.now().plusMinutes(minutesBeforeModifiedForInitiator);
         if (newEventDate.isBefore(timeLimit)) {
-            throw new ConflictException(format("Wrong event date: %td. " +
+            throw new BadRequestException(format("Wrong event date: %td. " +
                     "Time limit: %td", newEventDate, timeLimit));
         }
     }
@@ -515,7 +522,7 @@ public class EventServiceImpl implements EventService {
      */
     private void validateLimitRequests(int eventParticipantLimit,
                                        int countEventRequests) {
-        if (eventParticipantLimit < countEventRequests) {
+        if (eventParticipantLimit < countEventRequests && eventParticipantLimit != 0) {
             throw new ConflictException("it is not possible to confirm the request " +
                     "if the limit on requests for this event has already been reached");
         }
@@ -540,7 +547,7 @@ public class EventServiceImpl implements EventService {
 
     private void validateRequestStatus(Constants.RequestState status) {
         if (!status.equals(PENDING)) {
-            throw new ForbiddenException((format("Wrong request state: %s", status)));
+            throw new ConflictException((format("Wrong request state: %s", status)));
         }
     }
 

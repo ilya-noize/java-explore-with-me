@@ -10,6 +10,7 @@ import ru.practicum.event.request.api.dto.EventRequestDto;
 import ru.practicum.event.request.api.mapper.EventRequestMapper;
 import ru.practicum.event.request.api.repository.EventRequestRepository;
 import ru.practicum.event.request.entity.EventRequest;
+import ru.practicum.exception.BadRequestException;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.user.api.repository.UserRepository;
@@ -66,14 +67,14 @@ public class EventRequestServiceImpl implements EventRequestService {
         }
         int limit = event.getParticipantLimit();
         int confirmedRequests = event.getConfirmedRequests().size();
-        if (confirmedRequests == limit) {
-            throw new ConflictException("The event has reached the limit of participation requests.");
+        if (confirmedRequests == limit && limit != 0) {
+            throw new BadRequestException("The event has reached the limit of participation requests.");
         }
         EventRequest request = EventRequest.builder()
                 .created(LocalDateTime.now())
                 .event(event)
                 .requester(requester)
-                .status(event.isRequestModeration() ? PENDING : CONFIRMED)
+                .status(getEventRequestState(event))
                 .build();
 
         return EventRequestMapper.INSTANCE.toDto(
@@ -81,25 +82,35 @@ public class EventRequestServiceImpl implements EventRequestService {
     }
 
     @Override
-    public EventRequestDto cancelRequest(EventRequestDto dto) {
-        User requester = validateUser(dto.getRequester());
-        long eventId = dto.getEvent();
-        Event event = validateEvent(eventId);
-        EventRequest request = validateEventRequest(eventId);
-
+    public EventRequestDto cancelRequest(long userId, long requestId) {
+        User requester = validateUser(userId);
+        EventRequest request = validateEventRequest(requestId);
         if (!request.getRequester().equals(requester)) {
-            throw new NotFoundException(format(EVENT_NOT_EXISTS, eventId));
+            throw new NotFoundException(format(EVENT_REQUEST_NOT_EXISTS, requestId));
         }
-
-        if (request.getStatus().equals(CANCELED)) {
-
-            return dto;
-        }
-
         request.setStatus(CANCELED);
-        requestRepository.eventRequestCancel(CANCELED, request.getId(), event, requester);
 
-        return EventRequestMapper.INSTANCE.toDto(request);
+        return EventRequestMapper.INSTANCE.toDto(requestRepository.save(request));
+    }
+
+    /**
+     * Для автоматической установки статуса нового запроса на участии в событии
+     * <p>
+     * Если лимит участников не ограничен (равен 0), принять запрос;<br/>
+     * Если модерация запросов включена, отправить на подтверждение инициатору события;<br/>
+     * Если модерация запросов выключена, принять запрос;<br/>
+     *
+     * @param event Event
+     * @return Request State
+     */
+    private Constants.RequestState getEventRequestState(Event event) {
+        if (event.getParticipantLimit() == 0) {
+            return CONFIRMED;
+        }
+        if (event.isRequestModeration()) {
+            return PENDING;
+        }
+        return CONFIRMED;
     }
 
     private User validateUser(long userId) {

@@ -9,5 +9,5 @@ public interface EventRequestService {
 
     EventRequestDto createRequest(long userId, long eventId);
 
-    EventRequestDto cancelRequest(EventRequestDto dto);
+    EventRequestDto cancelRequest(long userId, long requestId);
 }
