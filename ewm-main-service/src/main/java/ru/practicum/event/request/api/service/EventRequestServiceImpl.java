@@ -26,6 +26,7 @@ import static ru.practicum.constants.Constants.EVENT_REQUEST_NOT_EXISTS;
 import static ru.practicum.constants.Constants.RequestState.CANCELED;
 import static ru.practicum.constants.Constants.RequestState.CONFIRMED;
 import static ru.practicum.constants.Constants.RequestState.PENDING;
+import static ru.practicum.constants.Constants.RequestState.REJECTED;
 import static ru.practicum.constants.Constants.USER_NOT_EXISTS;
 import static ru.practicum.constants.Constants.checkPageable;
 
@@ -98,11 +99,17 @@ public class EventRequestServiceImpl implements EventRequestService {
      * @return Request State
      */
     private Constants.RequestState getEventRequestState(Event event) {
-        if (event.getParticipantLimit() == 0) {
+        long confirmedRequests = event.getConfirmedRequests().size();
+        int participantLimit = event.getParticipantLimit();
+        if (participantLimit == 0) {
             return CONFIRMED;
         }
         if (event.isRequestModeration()) {
             return PENDING;
+        } else {
+            if (confirmedRequests + 1 > participantLimit) {
+                return REJECTED;
+            }
         }
         return CONFIRMED;
     }
