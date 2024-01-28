@@ -191,28 +191,33 @@ public class EventServiceImpl implements EventService {
         validateConfirmation(event);
         List<Long> requestIds = eventRequestStatusUpdateRequest.getRequestIds();
         List<EventRequest> requests = requestRepository.findAllById(requestIds);
-        if (requestIds.size() != requests.size()) {
-            throw new BadRequestException("There are non-existent queries in the list");
-        }
-        int countEventRequests = requestRepository.countByEvent_IdAndStatus(eventId, CONFIRMED);
+        int countConfirmedRequests = requestRepository.countByEvent_IdAndStatus(eventId, CONFIRMED);
         int eventParticipantLimit = event.getParticipantLimit();
-        validateLimitRequests(eventParticipantLimit, countEventRequests);
+        validateLimitRequests(eventParticipantLimit, countConfirmedRequests);
 
         EventRequestStatusUpdateResult statusUpdateResponse = new EventRequestStatusUpdateResult();
         Constants.RequestState updateStatus = eventRequestStatusUpdateRequest.getStatus();
         for (EventRequest request : requests) {
-            validateRequestStatus(request.getStatus());
+
+            Constants.RequestState status = request.getStatus();
+//            validateRequestStatus(status);
+
+            if (!status.equals(PENDING)) {
+                throw new ConflictException((format("Wrong request state: %s", status)));
+            }
 
             if (updateStatus.equals(CONFIRMED)) {
-                if (countEventRequests <= eventParticipantLimit) {
+                countConfirmedRequests++;
+                if (countConfirmedRequests <= eventParticipantLimit) {
                     request.setStatus(CONFIRMED);
-                    countEventRequests++;
                     statusUpdateResponse.getConfirmedRequests()
                             .add(EventRequestMapper.INSTANCE.toDto(request));
                 } else {
-                    request.setStatus(REJECTED);
-                    statusUpdateResponse.getRejectedRequests()
-                            .add(EventRequestMapper.INSTANCE.toDto(request));
+//                    request.setStatus(REJECTED);
+//                    statusUpdateResponse.getRejectedRequests()
+//                            .add(EventRequestMapper.INSTANCE.toDto(request));
+                    throw new ConflictException("It is not possible to confirm the request " +
+                            "if the limit on requests for this event has already been reached");
                 }
             } else {
                 request.setStatus(REJECTED);
@@ -542,12 +547,6 @@ public class EventServiceImpl implements EventService {
                 error = format("Finish:%td before Start:%td", rangeFinish, rangeStart);
                 throw new BadRequestException(error);
             }
-        }
-    }
-
-    private void validateRequestStatus(Constants.RequestState status) {
-        if (!status.equals(PENDING)) {
-            throw new ConflictException((format("Wrong request state: %s", status)));
         }
     }
 
