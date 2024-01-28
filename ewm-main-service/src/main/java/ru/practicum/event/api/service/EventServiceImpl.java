@@ -347,7 +347,7 @@ public class EventServiceImpl implements EventService {
 //                .collect(toList());
 
         addHit(httpServletRequest);
-        events.forEach( event -> {
+        events.forEach(event -> {
             long views = event.getViews() + 1;
             event.setViews(views);
         });

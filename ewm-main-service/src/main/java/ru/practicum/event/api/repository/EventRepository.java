@@ -19,6 +19,7 @@ public interface EventRepository extends CrudRepository<Event, Long>, JpaSpecifi
     @Modifying
     @Query("update Event e set e.views = :views where e.id = :id")
     void updateViews(@Param("views") long views, @Param("id") Long id);
+
     Optional<List<Event>> getByInitiator(User initiator, Pageable pageable);
 
     boolean existsByIdAndInitiator_Id(Long id, Long id1);
@@ -27,6 +28,7 @@ public interface EventRepository extends CrudRepository<Event, Long>, JpaSpecifi
 
     /**
      * Used in category service. delete-method.
+     *
      * @param id ID category
      * @return Count events on category
      */
