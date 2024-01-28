@@ -209,9 +209,6 @@ public class EventServiceImpl implements EventService {
                     statusUpdateResponse.getConfirmedRequests()
                             .add(EventRequestMapper.INSTANCE.toDto(request));
                 } else {
-//                    request.setStatus(REJECTED);
-//                    statusUpdateResponse.getRejectedRequests()
-//                            .add(EventRequestMapper.INSTANCE.toDto(request));
                     throw new ConflictException("It is not possible to confirm the request " +
                             "if the limit on requests for this event has already been reached");
                 }

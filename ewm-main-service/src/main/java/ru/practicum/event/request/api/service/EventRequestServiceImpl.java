@@ -26,7 +26,6 @@ import static ru.practicum.constants.Constants.EVENT_REQUEST_NOT_EXISTS;
 import static ru.practicum.constants.Constants.RequestState.CANCELED;
 import static ru.practicum.constants.Constants.RequestState.CONFIRMED;
 import static ru.practicum.constants.Constants.RequestState.PENDING;
-import static ru.practicum.constants.Constants.RequestState.REJECTED;
 import static ru.practicum.constants.Constants.USER_NOT_EXISTS;
 import static ru.practicum.constants.Constants.checkPageable;
 
@@ -108,7 +107,8 @@ public class EventRequestServiceImpl implements EventRequestService {
             return PENDING;
         } else {
             if (confirmedRequests + 1 > participantLimit) {
-                return REJECTED;
+                throw new ConflictException("It is not possible to confirm the request " +
+                        "if the limit on requests for this event has already been reached");
             }
         }
         return CONFIRMED;

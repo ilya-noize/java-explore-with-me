@@ -19,8 +19,8 @@ import java.util.Map;
 
 @Service
 public class ClientService extends HttpClient {
-    private static final String API_PREFIX = "/";
     public static final String PATTERN = "yyyy-MM-dd HH:mm:ss";
+    private static final String API_PREFIX = "/";
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(PATTERN);
 
     @Autowired
@@ -31,9 +31,8 @@ public class ClientService extends HttpClient {
                 .build());
     }
 
-    public HitDto post(HitDto dto) {
-        ResponseEntity<HitDto> responseEntity = this.post(dto, new HitDto());
-        return responseEntity.getBody();
+    public void post(HitDto dto) {
+        this.post(dto, new HitDto());
     }
 
     public List<ViewStatsDto> get(LocalDateTime start, LocalDateTime end, String[] uris, boolean unique) {
