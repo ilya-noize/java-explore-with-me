@@ -87,7 +87,6 @@ public class EventPrivateController {
             @PathVariable Long eventId,
             @RequestBody EventRequestStatusUpdateRequest dto) {
         log.debug("[i] update state by requests for user's (ID:{}) event by ID:{}", eventId, userId);
-        log.info("DTO: {}", dto);
 
         return service.updateRequestsInEvent(userId, eventId, dto);
     }

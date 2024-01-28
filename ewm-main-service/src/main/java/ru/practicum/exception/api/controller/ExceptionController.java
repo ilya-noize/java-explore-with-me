@@ -165,4 +165,21 @@ public class ExceptionController {
                 .timestamp(LocalDateTime.now())
                 .build();
     }
+
+    @ExceptionHandler(Throwable.class)
+    @ResponseStatus(INTERNAL_SERVER_ERROR)
+    public ApiError handleThrowable(Throwable e) {
+        StackTraceElement[] allErrors = e.getStackTrace();
+
+        logError(INTERNAL_SERVER_ERROR, allErrors[0].toString(), e);
+
+        return ApiError.builder()
+                .description("Throwable")
+                .errors(Collections.singletonList(Arrays.toString(allErrors)))
+                .message(e.getMessage())
+                .reason(e.getClass().getName())
+                .status(INTERNAL_SERVER_ERROR)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
 }

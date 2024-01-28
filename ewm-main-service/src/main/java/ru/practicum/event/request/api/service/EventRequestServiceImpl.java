@@ -64,11 +64,6 @@ public class EventRequestServiceImpl implements EventRequestService {
         if (!event.getState().equals(Constants.EventState.PUBLISHED)) {
             throw new ConflictException("Cannot participate in an unpublished event");
         }
-//        int limit = event.getParticipantLimit();
-//        int confirmedRequests = event.getConfirmedRequests().size();
-//        if (confirmedRequests == limit && limit != 0) {
-//            throw new ConflictException("The event has reached the limit of participation requests.");
-//        }
         EventRequest request = EventRequest.builder()
                 .created(LocalDateTime.now())
                 .event(event)

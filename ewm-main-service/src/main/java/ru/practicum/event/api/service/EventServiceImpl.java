@@ -5,10 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.EnumUtils;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import ru.practicum.HitDto;
-import ru.practicum.ViewStatsDto;
 import ru.practicum.category.api.repository.CategoryRepository;
 import ru.practicum.category.entity.Category;
 import ru.practicum.constants.Constants;
@@ -38,7 +36,7 @@ import ru.practicum.location.dto.LocationDto;
 import ru.practicum.location.entity.Location;
 import ru.practicum.location.mapper.LocationMapper;
 import ru.practicum.location.repository.LocationRepository;
-import ru.practicum.service.StatisticService;
+import ru.practicum.service.ClientService;
 import ru.practicum.user.api.repository.UserRepository;
 import ru.practicum.user.entity.User;
 
@@ -46,9 +44,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
@@ -72,7 +68,7 @@ public class EventServiceImpl implements EventService {
     private final CategoryRepository categoryRepository;
     private final EventRequestRepository requestRepository;
     private final LocationRepository locationRepository;
-    private final StatisticService statisticService;
+    private final ClientService statisticService;
 
     private static void validateEventState(Constants.EventState eventState) {
         if (eventState.equals(Constants.EventState.PUBLISHED)) {
@@ -322,36 +318,58 @@ public class EventServiceImpl implements EventService {
         }
 
         System.out.println("categories = " + categories);
-        if (isSizeNotZeroAndIndexZeroNotZero(categories)) eventSpecification.add(getCriteriaListCategories(categories));
-        if (paid != null) eventSpecification.add(getCriteriaPaid(paid));
-        if (rangeStart != null) eventSpecification.add(getCriteriaRangeStart(rangeStart));
-        if (rangeFinish != null) eventSpecification.add(getCriteriaRangeFinish(rangeFinish));
+        if (isSizeNotZeroAndIndexZeroNotZero(categories)) {
+            eventSpecification.add(getCriteriaListCategories(categories));
+        }
+        if (paid != null) {
+            eventSpecification.add(getCriteriaPaid(paid));
+        }
+        if (rangeStart != null) {
+            eventSpecification.add(getCriteriaRangeStart(rangeStart));
+        }
+        if (rangeFinish != null) {
+            eventSpecification.add(getCriteriaRangeFinish(rangeFinish));
+        }
         boolean isOnlyAvailable = onlyAvailable != null && onlyAvailable;
         if (isOnlyAvailable) eventSpecification.add(getCriteriaParticipantLimitNotDefined());
         List<Event> events = getEventsBySpecs(eventSpecification, pageable);
 
+//        return events.stream()
+//                .filter(event -> {
+//                    if (isOnlyAvailable && event.getParticipantLimit() != 0) {
+//                        addHit(httpServletRequest);
+//                        return event.getParticipantLimit() > event.getConfirmedRequests().size();
+//                    }
+//                    addHit(httpServletRequest);
+//                    return true;
+//                })
+//                .map(EventMapper.INSTANCE::toShortDto)
+//                .collect(toList());
+
+        addHit(httpServletRequest);
+        events.forEach( event -> {
+            long views = event.getViews() + 1;
+            event.setViews(views);
+        });
+
+        eventRepository.saveAll(events);
+
         return events.stream()
-                .filter(event -> {
-                    if (isOnlyAvailable && event.getParticipantLimit() != 0) {
-                        addHit(httpServletRequest);
-                        return event.getParticipantLimit() > event.getConfirmedRequests().size();
-                    }
-                    addHit(httpServletRequest);
-                    return true;
-                })
                 .map(EventMapper.INSTANCE::toShortDto)
                 .collect(toList());
     }
 
     @Override
-    public EventDto get(Long eventId, HttpServletRequest httpRequest) {
+    public EventDto get(Long eventId, HttpServletRequest httpServletRequest) {
         Event event = getEvent(eventId);
         if (!event.getState().equals(Constants.EventState.PUBLISHED)) {
             throw new NotFoundException(format(EVENT_NOT_EXISTS, eventId));
         }
-        addHit(httpRequest);
-//        event.setViews(event.getViews() + 1);
-        event.setViews(getViews(eventId));
+        addHit(httpServletRequest);
+        long updatedViews = event.getViews() + 1;
+        event.setViews(updatedViews);
+        eventRepository.updateViews(eventId, updatedViews);
+
         return EventMapper.INSTANCE.toDto(event);
     }
 
@@ -372,23 +390,6 @@ public class EventServiceImpl implements EventService {
                 .ip(httpServletRequest.getRemoteAddr())
                 .timestamp(LocalDateTime.now())
                 .build());
-    }
-
-    private Integer getViews(long eventId) {
-        ResponseEntity<ViewStatsDto[]> response = statisticService.getData(
-                LocalDateTime.now().minusYears(1),
-                LocalDateTime.now(),
-                new String[]{"/events/" + eventId},
-                true);
-        int views = 0;
-        Optional<ViewStatsDto> stat;
-        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-            stat = Arrays.stream(response.getBody()).findFirst();
-            if (stat.isPresent()) {
-                views = Math.toIntExact(stat.get().getHits());
-            }
-        }
-        return views;
     }
 
     private void updateTitleAnnotationDescriptionCategoryLocationPaidParticipantLimitModeration(
@@ -523,7 +524,7 @@ public class EventServiceImpl implements EventService {
      * 409 - Conflict if event limit equals limit current time
      *
      * @param eventParticipantLimit event limit
-     * @param countEventRequests            now limit
+     * @param countEventRequests    now limit
      */
     private void validateLimitRequests(int eventParticipantLimit,
                                        int countEventRequests) {
