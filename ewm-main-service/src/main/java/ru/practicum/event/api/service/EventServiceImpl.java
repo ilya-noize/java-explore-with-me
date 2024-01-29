@@ -79,8 +79,6 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventDto create(long userId, NewEventDto dto) {
-        // 400
-        // 409 - Событие не удовлетворяет правилам создания
         User initiator = getUser(userId);
         Category category = getCategory(dto.getCategory());
         LocalDateTime eventDate = dto.getEventDate();
@@ -171,7 +169,6 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventRequestDto> getRequestsInEvent(Long userId, Long eventId) {
-        //400 - request error
         isExistsUserLikeInitiatorEvent(userId, eventId);
         return requestRepository.getByEvent_Id(eventId).stream()
                 .map(EventRequestMapper.INSTANCE::toDto)
@@ -197,7 +194,6 @@ public class EventServiceImpl implements EventService {
         for (EventRequest request : requests) {
 
             Constants.RequestState status = request.getStatus();
-//            validateRequestStatus(status);
 
             if (!status.equals(PENDING)) {
                 throw new ConflictException((format("Wrong request state: %s", status)));
@@ -278,7 +274,7 @@ public class EventServiceImpl implements EventService {
     }
 
     /**
-     * patch request query like <u>?users=0&categories=0</u>
+     * patch request query like <u>?users=0&[same array]=0</u>
      * <p>
      * boolean b1 = users == List.of(0L);   // false    <br/>
      * boolean b2 = !users.isEmpty();       // true     <br/>
@@ -393,7 +389,7 @@ public class EventServiceImpl implements EventService {
                 new String[]{"/events/" + eventId},
                 true);
 
-        return response != null ? response.get(0).getHits() : 0;
+        return !response.isEmpty() ? response.get(0).getHits() : 0;
     }
 
     private void updateTitleAnnotationDescriptionCategoryLocationPaidParticipantLimitModeration(
@@ -558,9 +554,6 @@ public class EventServiceImpl implements EventService {
     private void validateAdminTimeMoment(LocalDateTime eventDate) {
         String error;
         if (eventDate != null) {
-//            throw new ForbiddenException("eventDate is null");
-//        }
-
             int minutesBeforeModified = 60;
             LocalDateTime now = LocalDateTime.now();
             LocalDateTime timeLimit = now.minusMinutes(minutesBeforeModified);
