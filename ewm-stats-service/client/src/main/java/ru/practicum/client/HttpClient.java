@@ -25,7 +25,7 @@ public class HttpClient {
     protected ResponseEntity<List<ViewStatsDto>> get(@Nullable Map<String, Object> parameters, List<ViewStatsDto> response) {
         return makeAndSendRequest(
                 GET,
-                "/stats?start={start}&end={end}&uris={uris}&uniq={unique}",
+                "/stats?start={start}&end={end}&uris={uris}&unique={unique}",
                 parameters,
                 null,
                 response);

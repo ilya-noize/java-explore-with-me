@@ -29,11 +29,11 @@ public class StatServiceImpl implements StatService {
         return mapper.toHitDto(repository.save(entity));
     }
 
-    public List<ViewStatsDto> receive(
-            LocalDateTime start,
-            LocalDateTime end,
-            String[] uris,
-            Boolean isUnique) {
+    public List<ViewStatsDto> receive(LocalDateTime start,
+                                      LocalDateTime end,
+                                      String[] uris,
+                                      Boolean isUnique) {
+        if (isUnique == null) isUnique = false;
         log.info("[i] getStatistic(unique = {}) \n start = {}, end = {}, uris = {}",
                 isUnique, start, end, uris);
         boolean isEmptyUris = uris == null || uris.length == 0;

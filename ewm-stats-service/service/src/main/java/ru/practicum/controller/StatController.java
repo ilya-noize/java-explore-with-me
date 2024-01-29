@@ -34,7 +34,7 @@ public class StatController {
             @RequestParam @DateTimeFormat(pattern = PATTERN) LocalDateTime start,
             @RequestParam @DateTimeFormat(pattern = PATTERN) LocalDateTime end,
             @RequestParam(required = false) String[] uris,
-            @RequestParam(defaultValue = "false") Boolean unique) {
+            @RequestParam(defaultValue = "true") Boolean unique) {
 
         return service.receive(start, end, uris, unique);
     }

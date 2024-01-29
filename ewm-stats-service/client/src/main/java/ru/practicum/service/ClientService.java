@@ -1,5 +1,8 @@
 package ru.practicum.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -16,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@Slf4j
 public class ClientService extends HttpClient {
     private static final String API_PREFIX = "/";
 
@@ -28,11 +32,14 @@ public class ClientService extends HttpClient {
     }
 
     public void post(HitDto dto) {
+        log.debug("[client] save statistic data by URL:{}\nIP:{}\nAPP:{}",
+                dto.getUri(), dto.getId(), dto.getApp());
         this.post(dto, new HitDto());
     }
 
-    public ResponseEntity<List<ViewStatsDto>> get(String start, String end, String[] uris, boolean unique) {
-        Map<String, Object> map = Map.of(
+    public List<ViewStatsDto> get(String start, String end, String[] uris, boolean unique) {
+        log.debug("[client] get statistic data by URLs:{}\nPeriod:{} - {}", uris, start, end);
+        Map<String, Object> parameters = Map.of(
                 "start", start,
                 "end", end,
                 "uris", String.join(",", uris),
@@ -40,6 +47,19 @@ public class ClientService extends HttpClient {
 
         );
 
-        return this.get(map, new ArrayList<>());
+        ResponseEntity<List<ViewStatsDto>> response = this.get(parameters, new ArrayList<>());
+
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            ObjectMapper mapper = new ObjectMapper();
+            try {
+                log.debug("[]");
+                return List.of(mapper.readValue(
+                        mapper.writeValueAsString(response.getBody()),
+                        ViewStatsDto[].class));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e.getMessage());
+            }
+        }
+        return null;
     }
 }

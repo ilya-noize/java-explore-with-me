@@ -1,13 +1,10 @@
 package ru.practicum.event.api.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.EnumUtils;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import ru.practicum.HitDto;
 import ru.practicum.ViewStatsDto;
@@ -337,8 +334,10 @@ public class EventServiceImpl implements EventService {
 
         addHit(httpServletRequest);
         events.forEach(event -> {
-            long views = getViews(event.getId());
-            event.setViews(views);
+            Long eventId = event.getId();
+            long uniqueViews = getUniqueViews(eventId);
+            event.setViews(uniqueViews);
+            updateViewsByIdEvent(eventId, uniqueViews);
         });
         eventRepository.saveAll(events);
 
@@ -354,24 +353,30 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundException(format(EVENT_NOT_EXISTS, eventId));
         }
         addHit(httpServletRequest);
-        long views = getViews(eventId);
-        event.setViews(views);
-        eventRepository.save(event);
+        long uniqueViews = getUniqueViews(eventId);
+        event.setViews(uniqueViews);
+        updateViewsByIdEvent(eventId, uniqueViews);
 
         return EventMapper.INSTANCE.toDto(event);
     }
 
+    private void updateViewsByIdEvent(Long eventId, long uniqueViews) {
+        if (eventRepository.updateViewsById(uniqueViews, eventId) > 0) {
+            log.debug("[✓] update statistic data");
+        } else log.warn("[!] fail update statistic data");
+    }
+
     private List<Event> getEventsBySpecs(EventSpecification eventSpecification, Pageable pageable) {
-        if (eventSpecification.getList().isEmpty()) {
 
-            return eventRepository.findAll(eventSpecification, pageable).toList();
-        } else {
-
-            return eventRepository.findAll(pageable);
-        }
+        return eventSpecification.getList().isEmpty()
+                ?
+                eventRepository.findAll(eventSpecification, pageable).toList()
+                :
+                eventRepository.findAll(pageable);
     }
 
     private void addHit(HttpServletRequest httpServletRequest) {
+
         statisticService.post(HitDto.builder()
                 .app("ewm-main-service")
                 .uri(httpServletRequest.getRequestURI())
@@ -380,26 +385,15 @@ public class EventServiceImpl implements EventService {
                 .build());
     }
 
-    private long getViews(long eventId) {
+    private long getUniqueViews(long eventId) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
-        ResponseEntity<List<ViewStatsDto>> response = statisticService.get(
+        List<ViewStatsDto> response = statisticService.get(
                 LocalDateTime.now().minusYears(1).format(formatter),
                 LocalDateTime.now().format(formatter),
                 new String[]{"/events/" + eventId},
                 true);
-        List<ViewStatsDto> stat;
-        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-            ObjectMapper mapper = new ObjectMapper();
-            try {
-                stat = List.of(mapper.readValue(
-                        mapper.writeValueAsString(response.getBody()),
-                        ViewStatsDto[].class));
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-            return stat.get(0).getHits();
-        }
-        return 0;
+
+        return response != null ? response.get(0).getHits() : 0;
     }
 
     private void updateTitleAnnotationDescriptionCategoryLocationPaidParticipantLimitModeration(
