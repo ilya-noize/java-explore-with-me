@@ -1,12 +1,16 @@
 package ru.practicum.event.api.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.EnumUtils;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import ru.practicum.HitDto;
+import ru.practicum.ViewStatsDto;
 import ru.practicum.category.api.repository.CategoryRepository;
 import ru.practicum.category.entity.Category;
 import ru.practicum.constants.Constants;
@@ -333,7 +337,7 @@ public class EventServiceImpl implements EventService {
 
         addHit(httpServletRequest);
         events.forEach(event -> {
-            long views = event.getViews() + 1;
+            long views = getViews(event.getId());
             event.setViews(views);
         });
         eventRepository.saveAll(events);
@@ -350,9 +354,9 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundException(format(EVENT_NOT_EXISTS, eventId));
         }
         addHit(httpServletRequest);
-        long updatedViews = event.getViews() + 1;
-        event.setViews(updatedViews);
-        eventRepository.updateViews(eventId, updatedViews);
+        long views = getViews(eventId);
+        event.setViews(views);
+        eventRepository.save(event);
 
         return EventMapper.INSTANCE.toDto(event);
     }
@@ -374,6 +378,28 @@ public class EventServiceImpl implements EventService {
                 .ip(httpServletRequest.getRemoteAddr())
                 .timestamp(LocalDateTime.now())
                 .build());
+    }
+
+    private long getViews(long eventId) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
+        ResponseEntity<List<ViewStatsDto>> response = statisticService.get(
+                LocalDateTime.now().minusYears(1).format(formatter),
+                LocalDateTime.now().format(formatter),
+                new String[]{"/events/" + eventId},
+                true);
+        List<ViewStatsDto> stat;
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            ObjectMapper mapper = new ObjectMapper();
+            try {
+                stat = List.of(mapper.readValue(
+                        mapper.writeValueAsString(response.getBody()),
+                        ViewStatsDto[].class));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+            return stat.get(0).getHits();
+        }
+        return 0;
     }
 
     private void updateTitleAnnotationDescriptionCategoryLocationPaidParticipantLimitModeration(

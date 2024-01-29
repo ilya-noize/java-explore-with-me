@@ -10,6 +10,7 @@ import ru.practicum.event.request.api.dto.EventRequestDto;
 import ru.practicum.event.request.api.mapper.EventRequestMapper;
 import ru.practicum.event.request.api.repository.EventRequestRepository;
 import ru.practicum.event.request.entity.EventRequest;
+import ru.practicum.exception.BadRequestException;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.user.api.repository.UserRepository;
@@ -50,7 +51,10 @@ public class EventRequestServiceImpl implements EventRequestService {
     }
 
     @Override
-    public EventRequestDto createRequest(long userId, long eventId) {
+    public EventRequestDto createRequest(long userId, Long eventId) {
+        if (eventId == null) {
+            throw new BadRequestException("A required parameter `eventId` is omitted.");
+        }
         User requester = validateUser(userId);
         Event event = validateEvent(eventId);
         if (userId == event.getInitiator().getId()) {

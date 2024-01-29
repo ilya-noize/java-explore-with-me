@@ -11,17 +11,13 @@ import ru.practicum.HitDto;
 import ru.practicum.ViewStatsDto;
 import ru.practicum.client.HttpClient;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 @Service
 public class ClientService extends HttpClient {
-    public static final String PATTERN = "yyyy-MM-dd HH:mm:ss";
     private static final String API_PREFIX = "/";
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(PATTERN);
 
     @Autowired
     public ClientService(@Value("${stats-server.url}") String serverUrl, RestTemplateBuilder builder) {
@@ -35,17 +31,15 @@ public class ClientService extends HttpClient {
         this.post(dto, new HitDto());
     }
 
-    public List<ViewStatsDto> get(LocalDateTime start, LocalDateTime end, String[] uris, boolean unique) {
+    public ResponseEntity<List<ViewStatsDto>> get(String start, String end, String[] uris, boolean unique) {
         Map<String, Object> map = Map.of(
-                "start", start.format(FORMATTER),
-                "end", end.format(FORMATTER),
+                "start", start,
+                "end", end,
                 "uris", String.join(",", uris),
                 "unique", unique
 
         );
-        ResponseEntity<List<ViewStatsDto>> responseEntity =
-                this.get(map, new ArrayList<>());
 
-        return responseEntity.getBody();
+        return this.get(map, new ArrayList<>());
     }
 }

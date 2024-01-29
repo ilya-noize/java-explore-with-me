@@ -82,6 +82,7 @@ public class EventController {
     @GetMapping({"/events/{eventId}"})
     public EventDto get(@PathVariable Long eventId, HttpServletRequest httpRequest) {
         log.debug("[i] get event ID:{}", eventId);
+
         return service.get(eventId, httpRequest);
     }
 }

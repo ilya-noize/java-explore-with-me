@@ -40,7 +40,7 @@ public class EventRequestsController {
     @PostMapping({"/users/{userId}/requests"})
     @ResponseStatus(HttpStatus.CREATED)
     public EventRequestDto createRequest(@PathVariable Long userId,
-                                         @RequestParam Long eventId) {
+                                         @RequestParam(required = false) Long eventId) {
         log.debug("[i] Adding a request from the current user ID:{} \n" +
                 " to participate in the event ID:{}", userId, eventId);
         EventRequestDto response = service.createRequest(userId, eventId);
