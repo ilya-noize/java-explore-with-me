@@ -17,24 +17,31 @@ import java.util.Optional;
 public interface EventRepository extends CrudRepository<Event, Long>, JpaSpecificationExecutor<Event> {
     @Transactional
     @Modifying
+    @Query("update Event e set e.confirmedRequests = :confirmedRequests where e.id = :id")
+    void updateConfirmedRequestsById(@Param("confirmedRequests") long confirmedRequests,
+                                     @Param("id") long eventId);
+
+    @Transactional
+    @Modifying
     @Query("update Event e set e.views = :views where e.id = :id")
-    int updateViewsById(@Param("views") long views, @Param("id") Long id);
+    int updateViewsById(@Param("views") long views,
+                        @Param("id") long eventId);
 
     Optional<List<Event>> getByInitiator(User initiator, Pageable pageable);
 
-    boolean existsByIdAndInitiator_Id(Long id, Long id1);
+    boolean existsByIdAndInitiator_Id(long eventId, long userId);
 
-    Optional<Event> getByInitiatorAndId(User user, Long eventId);
+    Optional<Event> getByInitiatorAndId(User user, long eventId);
 
     /**
      * Used in category service. delete-method.
      *
-     * @param id ID category
+     * @param categoryId ID category
      * @return Count events on category
      */
-    long countByCategory_Id(Long id);
+    long countByCategory_Id(long categoryId);
 
-    Optional<List<Event>> getByIdInOrderByIdAsc(Collection<Long> ids);
+    Optional<List<Event>> getByIdInOrderByIdAsc(Collection<Long> eventIds);
 
     List<Event> findAll(Pageable pageable);
 }

@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS event
         published_on TIMESTAMP WITHOUT TIME ZONE,
         event_date TIMESTAMP WITHOUT TIME ZONE NOT NULL,
         participant_limit INTEGER NOT NULL,
+        confirmed_requests INTEGER NOT NULL,
         request_moderation BOOLEAN NOT NULL,
         state VARCHAR(50),
         views BIGINT NOT NULL

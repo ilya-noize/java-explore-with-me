@@ -102,7 +102,7 @@ public class EventRequestServiceImpl implements EventRequestService {
      * @return Request State
      */
     private Constants.RequestState getEventRequestState(Event event) {
-        long confirmedRequests = event.getConfirmedRequests().size();
+        long confirmedRequests = event.getConfirmedRequests();
         int participantLimit = event.getParticipantLimit();
         if (participantLimit == 0) {
             return CONFIRMED;

@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ru.practicum.category.entity.Category;
 import ru.practicum.constants.Constants;
-import ru.practicum.event.request.entity.EventRequest;
 import ru.practicum.location.entity.Location;
 import ru.practicum.user.entity.User;
 
@@ -20,12 +19,10 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.validation.constraints.PositiveOrZero;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
-import java.util.List;
 
 import static ru.practicum.constants.Constants.DATE_FORMAT;
 import static ru.practicum.constants.Constants.MAX_EVENT_ANNOTATION_LENGTH;
@@ -99,8 +96,7 @@ public class Event {
             pattern = DATE_FORMAT
     )
     private LocalDateTime eventDate;
-    @OneToMany(mappedBy = "event")
-    private List<EventRequest> confirmedRequests;
+    private long confirmedRequests;
     private @PositiveOrZero int participantLimit;
     private boolean requestModeration;
     @Enumerated(EnumType.STRING)

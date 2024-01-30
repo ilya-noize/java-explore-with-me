@@ -179,18 +179,18 @@ public class EventServiceImpl implements EventService {
     public EventRequestStatusUpdateResult updateRequestsInEvent(
             Long userId,
             Long eventId,
-            EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest) {
+            EventRequestStatusUpdateRequest dto) {
         isExistsUser(userId);
         Event event = getEvent(eventId);
         validateConfirmation(event);
-        List<Long> requestIds = eventRequestStatusUpdateRequest.getRequestIds();
+        List<Long> requestIds = dto.getRequestIds();
         List<EventRequest> requests = requestRepository.findAllById(requestIds);
         int countConfirmedRequests = requestRepository.countByEvent_IdAndStatus(eventId, CONFIRMED);
         int eventParticipantLimit = event.getParticipantLimit();
         validateLimitRequests(eventParticipantLimit, countConfirmedRequests);
 
         EventRequestStatusUpdateResult statusUpdateResponse = new EventRequestStatusUpdateResult();
-        Constants.RequestState updateStatus = eventRequestStatusUpdateRequest.getStatus();
+        Constants.RequestState updateStatus = dto.getStatus();
         for (EventRequest request : requests) {
 
             Constants.RequestState status = request.getStatus();
@@ -205,6 +205,9 @@ public class EventServiceImpl implements EventService {
                     request.setStatus(CONFIRMED);
                     statusUpdateResponse.getConfirmedRequests()
                             .add(EventRequestMapper.INSTANCE.toDto(request));
+                    eventRepository.updateConfirmedRequestsById(
+                            countConfirmedRequests,
+                            eventId);
                 } else {
                     throw new ConflictException("It is not possible to confirm the request " +
                             "if the limit on requests for this event has already been reached");
