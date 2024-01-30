@@ -313,10 +313,12 @@ public class EventServiceImpl implements EventService {
         validateRange(rangeStart, rangeFinish);
         EventSpecification eventSpecification = new EventSpecification();
         if (text != null) {
-            text = text.toUpperCase();
-            eventSpecification.add(getCriteriaTextInTitle(text));
-            eventSpecification.add(getCriteriaTextInAnnotation(text));
-            eventSpecification.add(getCriteriaTextInDescription(text));
+            if (!text.equals("0")) {
+                text = text.toUpperCase();
+                eventSpecification.add(getCriteriaTextInTitle(text));
+                eventSpecification.add(getCriteriaTextInAnnotation(text));
+                eventSpecification.add(getCriteriaTextInDescription(text));
+            }
         }
 
         if (isSizeNotZeroAndIndexZeroNotZero(categories)) {
@@ -498,8 +500,9 @@ public class EventServiceImpl implements EventService {
 
     private Sort getSort(String sort) {
         if (sort == null) return null;
-        sort = sort.toUpperCase();
-        switch (EnumUtils.getEnum(Constants.EventSortState.class, sort)) {
+        Constants.EventSortState anEnum = EnumUtils.getEnum(
+                Constants.EventSortState.class, sort.toUpperCase());
+        switch (anEnum) {
             case VIEWS:
                 return Sort.by("views").descending();
             case EVENT_DATE:
