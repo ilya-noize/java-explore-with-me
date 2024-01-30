@@ -105,7 +105,6 @@ public class EventRequestServiceImpl implements EventRequestService {
         int participantLimit = event.getParticipantLimit();
         if (participantLimit == 0 || !event.isRequestModeration()) {
             long confirmedRequests = event.getConfirmedRequests();
-            System.out.println("getEventRequestState -> confirmedRequests = " + confirmedRequests);
             if (confirmedRequests + 1 > participantLimit) {
                 throw new ConflictException("It is not possible to confirm the request " +
                         "if the limit on requests for this event has already been reached");
