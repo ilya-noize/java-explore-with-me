@@ -227,7 +227,11 @@ public class EventServiceImpl implements EventService {
         validateEventState(event.getState());
         Constants.StateAdminAction stateAction = dto.getStateAction();
         Constants.EventState eventState = event.getState();
-        event.setState(getModifyEventState(stateAction, eventState));
+        Constants.EventState modifyEventState = getModifyEventState(stateAction, eventState);
+        event.setState(modifyEventState);
+        if (modifyEventState.equals(Constants.EventState.PUBLISHED)) {
+            event.setPublishedOn(LocalDateTime.now());
+        }
 
         updateTitleAnnotationDescriptionCategoryLocationPaidParticipantLimitModeration(event,
                 dto.getTitle(),
@@ -524,7 +528,7 @@ public class EventServiceImpl implements EventService {
      * 409 - Conflict if event limit equals limit current time
      *
      * @param eventParticipantLimit event limit
-     * @param countEventRequests            now limit
+     * @param countEventRequests    now limit
      */
     private void validateLimitRequests(int eventParticipantLimit,
                                        int countEventRequests) {
