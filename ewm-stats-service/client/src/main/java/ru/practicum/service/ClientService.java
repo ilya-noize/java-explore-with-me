@@ -14,6 +14,8 @@ import ru.practicum.HitDto;
 import ru.practicum.ViewStatsDto;
 import ru.practicum.client.HttpClient;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -37,11 +39,15 @@ public class ClientService extends HttpClient {
         this.post(dto, new HitDto());
     }
 
-    public List<ViewStatsDto> get(String start, String end, String[] uris, boolean unique) {
+    public List<ViewStatsDto> get(LocalDateTime start, LocalDateTime end, String[] uris, boolean unique) {
         log.debug("[client] get statistic data by URLs:{}\nPeriod:{} - {}", uris, start, end);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String startFormat = start.format(formatter);
+        String endFormat = end.format(formatter);
+
         Map<String, Object> parameters = Map.of(
-                "start", start,
-                "end", end,
+                "start", startFormat,
+                "end", endFormat,
                 "uris", String.join(",", uris),
                 "unique", unique
 

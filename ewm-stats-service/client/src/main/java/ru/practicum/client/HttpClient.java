@@ -50,17 +50,17 @@ public class HttpClient {
         assert body != null;
         HttpEntity<T> requestEntity = new HttpEntity<>(body);
         Class kClass = response.getClass();
-        ResponseEntity<K> shareitServerResponse;
+        ResponseEntity<K> serverResponse;
         try {
             if (parameters != null) {
-                shareitServerResponse = rest.exchange(
+                serverResponse = rest.exchange(
                         path,
                         method,
                         requestEntity,
                         kClass,
                         parameters);
             } else {
-                shareitServerResponse = rest.exchange(
+                serverResponse = rest.exchange(
                         path,
                         method,
                         requestEntity,
@@ -71,7 +71,7 @@ public class HttpClient {
                     .status(e.getStatusCode())
                     .body(e.getResponseBodyAsByteArray());
         }
-        return prepareGatewayResponse(shareitServerResponse);
+        return prepareGatewayResponse(serverResponse);
     }
 
     private static <T> ResponseEntity<T> prepareGatewayResponse(ResponseEntity<T> response) {

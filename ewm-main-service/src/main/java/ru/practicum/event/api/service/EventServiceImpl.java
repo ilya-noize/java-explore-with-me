@@ -259,7 +259,7 @@ public class EventServiceImpl implements EventService {
             LocalDateTime rangeFinish,
             Integer from,
             Integer size) {
-        log.info("\nusers:{},\nstates:{},\ncategories:{},\nrangeStart:{},\nrangeFinish:{},\nfrom:{},\nsize:{}",
+        log.debug("[i] get Events Administration\nusers:{},\nstates:{},\ncategories:{},\nrangeStart:{},\nrangeFinish:{},\nfrom:{},\nsize:{}",
                 users, states, categories, rangeStart, rangeFinish, from, size);
 
         validateRange(rangeStart, rangeFinish);
@@ -392,10 +392,9 @@ public class EventServiceImpl implements EventService {
     }
 
     private long getUniqueViews(long eventId) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
         List<ViewStatsDto> response = statisticService.get(
-                LocalDateTime.now().minusYears(1).format(formatter),
-                LocalDateTime.now().format(formatter),
+                LocalDateTime.now().minusYears(1),
+                LocalDateTime.now(),
                 new String[]{"/events/" + eventId},
                 true);
 
