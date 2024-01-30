@@ -18,7 +18,7 @@ public interface EventRepository extends CrudRepository<Event, Long>, JpaSpecifi
     @Transactional
     @Modifying
     @Query("update Event e set e.confirmedRequests = :confirmedRequests where e.id = :id")
-    void updateConfirmedRequestsById(@Param("confirmedRequests") long confirmedRequests,
+    void updateConfirmedRequestsById(@Param("confirmedRequests") int confirmedRequests,
                                      @Param("id") long eventId);
 
     @Transactional

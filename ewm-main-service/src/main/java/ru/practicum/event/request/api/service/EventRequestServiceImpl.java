@@ -103,17 +103,24 @@ public class EventRequestServiceImpl implements EventRequestService {
      */
     private Constants.RequestState getEventRequestState(Event event) {
         int participantLimit = event.getParticipantLimit();
-        if (participantLimit == 0 || !event.isRequestModeration()) {
-            long confirmedRequests = event.getConfirmedRequests();
-            if (confirmedRequests + 1 > participantLimit) {
+        int confirmedRequests = event.getConfirmedRequests();
+        if (participantLimit == 0) {
+            return confirmedRequest(event, ++confirmedRequests);
+        }
+        if (!event.isRequestModeration()) {
+            if (++confirmedRequests > participantLimit) {
                 throw new ConflictException("It is not possible to confirm the request " +
                         "if the limit on requests for this event has already been reached");
             }
-            confirmedRequests++;
-            eventRepository.updateConfirmedRequestsById(confirmedRequests, event.getId());
-            return CONFIRMED;
+
+            return confirmedRequest(event, confirmedRequests);
         }
         return PENDING;
+    }
+
+    private Constants.RequestState confirmedRequest(Event event, int confirmedRequests) {
+        eventRepository.updateConfirmedRequestsById(confirmedRequests, event.getId());
+        return CONFIRMED;
     }
 
     private User validateUser(long userId) {

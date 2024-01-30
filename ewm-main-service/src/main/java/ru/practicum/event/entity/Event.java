@@ -96,7 +96,7 @@ public class Event {
             pattern = DATE_FORMAT
     )
     private LocalDateTime eventDate;
-    private long confirmedRequests;
+    private int confirmedRequests;
     private @PositiveOrZero int participantLimit;
     private boolean requestModeration;
     @Enumerated(EnumType.STRING)

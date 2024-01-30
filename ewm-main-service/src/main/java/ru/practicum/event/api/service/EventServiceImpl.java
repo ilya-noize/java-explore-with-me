@@ -97,6 +97,7 @@ public class EventServiceImpl implements EventService {
         event.setParticipantLimit(participantLimit == null ? 0 : participantLimit);
         Boolean requestModeration = dto.getRequestModeration();
         event.setRequestModeration(requestModeration == null || requestModeration);
+        event.setConfirmedRequests(0);
 
         return EventMapper.INSTANCE.toDto(
                 eventRepository.save(event));

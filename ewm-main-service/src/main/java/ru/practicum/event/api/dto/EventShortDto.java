@@ -28,7 +28,7 @@ public class EventShortDto {
     private String annotation;
     private CategoryDto category;
     private UserShortDto initiator;
-    private long confirmedRequests;
+    private int confirmedRequests;
     @JsonFormat(
             pattern = DATE_FORMAT
     )
