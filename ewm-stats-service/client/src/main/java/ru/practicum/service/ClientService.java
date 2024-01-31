@@ -14,6 +14,7 @@ import ru.practicum.HitDto;
 import ru.practicum.ViewStatsDto;
 import ru.practicum.client.HttpClient;
 
+import java.time.DateTimeException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -40,6 +41,8 @@ public class ClientService extends HttpClient {
     }
 
     public List<ViewStatsDto> get(LocalDateTime start, LocalDateTime end, String[] uris, boolean unique) {
+        if (start.isAfter(end)) throw new DateTimeException("start after end!");
+
         log.debug("[client] get statistic data by URLs:{}\nPeriod:{} - {}", uris, start, end);
         String pattern = "yyyy-MM-dd HH:mm:ss";
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
