@@ -13,6 +13,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
+import static ru.practicum.constants.Constants.MAX_CATEGORY_NAME_LENGTH;
+
 @Entity
 @Builder
 @Getter
@@ -26,7 +28,7 @@ public class Category {
     )
     private Long id;
     @Column(
-            length = 50,
+            length = MAX_CATEGORY_NAME_LENGTH,
             nullable = false,
             unique = true
     )

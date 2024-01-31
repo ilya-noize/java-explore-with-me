@@ -12,6 +12,9 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import static ru.practicum.constants.Constants.MAX_USER_EMAIL_LENGTH;
+import static ru.practicum.constants.Constants.MAX_USER_NAME_LENGTH;
+
 @Entity()
 @Table(name = "users")
 @Getter
@@ -24,6 +27,6 @@ public class User {
             strategy = GenerationType.IDENTITY
     )
     private Long id;
-    private @Column(unique = true, length = 254) String email;
-    private @Column(length = 250) String name;
+    private @Column(unique = true, length = MAX_USER_EMAIL_LENGTH) String email;
+    private @Column(length = MAX_USER_NAME_LENGTH) String name;
 }
