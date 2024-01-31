@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.EnumUtils;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import ru.practicum.HitDto;
 import ru.practicum.ViewStatsDto;
@@ -46,6 +47,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
@@ -54,6 +56,7 @@ import static org.springframework.data.domain.Sort.Direction.DESC;
 import static ru.practicum.constants.Constants.CATEGORY_NOT_EXISTS;
 import static ru.practicum.constants.Constants.DATE_FORMAT;
 import static ru.practicum.constants.Constants.EVENT_NOT_EXISTS;
+import static ru.practicum.constants.Constants.EventState.PUBLISHED;
 import static ru.practicum.constants.Constants.RequestState.CONFIRMED;
 import static ru.practicum.constants.Constants.RequestState.PENDING;
 import static ru.practicum.constants.Constants.RequestState.REJECTED;
@@ -72,7 +75,7 @@ public class EventServiceImpl implements EventService {
     private final ClientService statisticService;
 
     private static void validateEventState(Constants.EventState eventState) {
-        if (eventState.equals(Constants.EventState.PUBLISHED)) {
+        if (eventState.equals(PUBLISHED)) {
             throw new ConflictException("Event is published.");
         }
     }
@@ -131,7 +134,7 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.getByInitiatorAndId(initiator, eventId)
                 .orElseThrow(() -> new NotFoundException(EVENT_NOT_EXISTS));
         Constants.EventState eventState = event.getState();
-        if (eventState.equals(Constants.EventState.PUBLISHED)) {
+        if (eventState.equals(PUBLISHED)) {
             throw new ConflictException("Can only change canceled events or events in the waiting state of moderation");
         }
 
@@ -233,7 +236,7 @@ public class EventServiceImpl implements EventService {
         Constants.EventState eventState = event.getState();
         Constants.EventState modifyEventState = getModifyEventState(stateAction, eventState);
         event.setState(modifyEventState);
-        if (modifyEventState.equals(Constants.EventState.PUBLISHED)) {
+        if (modifyEventState.equals(PUBLISHED)) {
             event.setPublishedOn(LocalDateTime.now());
         }
 
@@ -310,33 +313,69 @@ public class EventServiceImpl implements EventService {
             Integer from,
             Integer size) {
         Pageable pageable = checkPageable(from, size, getSort(sort));
+        if (rangeStart == null) rangeStart = LocalDateTime.now();
         validateRange(rangeStart, rangeFinish);
-        EventSpecification eventSpecification = new EventSpecification();
+
+        List<Specification<Event>> specifications = new ArrayList<>();
         if (text != null) {
-            if (!text.equals("0")) {
-                text = text.toUpperCase();
-                eventSpecification.add(getCriteriaTextInTitle(text));
-                eventSpecification.add(getCriteriaTextInAnnotation(text));
-                eventSpecification.add(getCriteriaTextInDescription(text));
-            }
+            specifications.add(((root, query, criteriaBuilder) ->
+                    criteriaBuilder.or(
+                            criteriaBuilder.like(
+                                    criteriaBuilder.upper(
+                                            root.get("annotation")),
+                                    "%" + text.toUpperCase() + "%"),
+                            criteriaBuilder.like(
+                                    criteriaBuilder.upper(
+                                            root.get("description")),
+                                    "%" + text.toUpperCase() + "%"))));
         }
 
-        if (isSizeNotZeroAndIndexZeroNotZero(categories)) {
-            eventSpecification.add(getCriteriaListCategories(categories));
+        LocalDateTime finalRangeStart = rangeStart;
+        specifications.add(((root, query, criteriaBuilder) -> criteriaBuilder
+                .greaterThanOrEqualTo(root.get("eventDate"), finalRangeStart)));
+        specifications.add(((root, query, criteriaBuilder) -> criteriaBuilder
+                .equal(root.get("state"), PUBLISHED)));
+        if (categories != null) {
+            List<Category> categoriesList = categories.stream()
+                    .map(id -> categoryRepository.findById(id).orElse(null))
+                    .filter(Objects::nonNull)
+                    .collect(toList());
+            specifications.add(((root, query, criteriaBuilder) -> criteriaBuilder
+                    .in(root.get("category")).value(categoriesList)));
         }
         if (paid != null) {
-            eventSpecification.add(getCriteriaPaid(paid));
-        }
-        if (rangeStart != null) {
-            eventSpecification.add(getCriteriaRangeStart(rangeStart));
+            if (paid) {
+                specifications.add((root, query, criteriaBuilder) -> criteriaBuilder
+                        .isTrue(root.get("paid")));
+            } else {
+                specifications.add((root, query, criteriaBuilder) -> criteriaBuilder
+                        .isFalse(root.get("paid")));
+            }
         }
         if (rangeFinish != null) {
-            eventSpecification.add(getCriteriaRangeFinish(rangeFinish));
+            specifications.add(((root, query, criteriaBuilder) -> criteriaBuilder
+                    .lessThan(root.get("eventDate"), rangeFinish)));
         }
-        if (onlyAvailable != null && onlyAvailable) {
-            eventSpecification.add(getCriteriaParticipantLimitNotDefined());
+        if (onlyAvailable != null) {
+            if (onlyAvailable) specifications.add(((root, query, criteriaBuilder) ->
+                    criteriaBuilder.or(
+                            criteriaBuilder.equal(
+                                    root.get("participantLimit"), 0),
+                            criteriaBuilder.lessThan(
+                                    root.get("confirmedRequests"),
+                                    root.get("participantLimit")))
+            ));
         }
-        List<Event> events = getEventsBySpecs(eventSpecification, pageable);
+        List<Event> events;
+        Specification<Event> eventSpecification = specifications.stream()
+                .filter(Objects::nonNull)
+                .reduce(Specification::and)
+                .orElse(null);
+        if (eventSpecification != null) {
+            events = eventRepository.findAll(eventSpecification, pageable).toList();
+        } else {
+            events = eventRepository.findAll(pageable);
+        }
 
         addHit(httpServletRequest);
         events.forEach(event -> {
@@ -355,7 +394,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventDto get(Long eventId, HttpServletRequest httpServletRequest) {
         Event event = getEvent(eventId);
-        if (!event.getState().equals(Constants.EventState.PUBLISHED)) {
+        if (!event.getState().equals(PUBLISHED)) {
             throw new NotFoundException(format(EVENT_NOT_EXISTS, eventId));
         }
         addHit(httpServletRequest);
@@ -479,15 +518,15 @@ public class EventServiceImpl implements EventService {
                                                      Constants.EventState eventState) {
         String eventStateErrorMessage = "The event was moderated. " +
                 "Current status of the event: %s";
-        if (stateAction == null) return Constants.EventState.PUBLISHED;
+        if (stateAction == null) return PUBLISHED;
         switch (stateAction) {
             case PUBLISH_EVENT:
                 if (eventState != Constants.EventState.PENDING) {
                     throw new ConflictException(format(eventStateErrorMessage, eventState));
                 }
-                return Constants.EventState.PUBLISHED;
+                return PUBLISHED;
             case REJECT_EVENT:
-                if (eventState == Constants.EventState.PUBLISHED) {
+                if (eventState == PUBLISHED) {
                     throw new ConflictException(format(eventStateErrorMessage, eventState));
                 }
                 return Constants.EventState.CANCELED;
@@ -547,7 +586,6 @@ public class EventServiceImpl implements EventService {
     private void validateRange(LocalDateTime rangeStart,
                                LocalDateTime rangeFinish) {
         String error;
-        if (rangeStart == null) rangeStart = LocalDateTime.now();
         if (rangeFinish != null) {
             if (rangeFinish.isAfter(rangeStart)) {
                 if (rangeFinish.equals(rangeStart)) {
@@ -598,10 +636,6 @@ public class EventServiceImpl implements EventService {
         return null;
     }
 
-    private SearchCriteria getCriteriaPaid(Boolean paid) {
-        return new SearchCriteria("paid", paid, SearchOperation.EQUAL);
-    }
-
     private SearchCriteria getCriteriaRangeStart(LocalDateTime rangeStart) {
 
         return new SearchCriteria("eventDate", rangeStart, SearchOperation.GREATER_THAN_EQUAL);
@@ -609,10 +643,6 @@ public class EventServiceImpl implements EventService {
 
     private SearchCriteria getCriteriaRangeFinish(LocalDateTime rangeFinish) {
         return new SearchCriteria("eventDate", rangeFinish, SearchOperation.LESS_THAN);
-    }
-
-    private SearchCriteria getCriteriaParticipantLimitNotDefined() {
-        return new SearchCriteria("participantLimit", 0, SearchOperation.EQUAL);
     }
 
     private SearchCriteria getCriteriaStates(List<String> states) {
@@ -631,20 +661,5 @@ public class EventServiceImpl implements EventService {
         }
 
         return null;
-    }
-
-    private SearchCriteria getCriteriaTextInTitle(String text) {
-
-        return new SearchCriteria("title", text, SearchOperation.MATCH);
-    }
-
-    private SearchCriteria getCriteriaTextInAnnotation(String text) {
-
-        return new SearchCriteria("annotation", text, SearchOperation.MATCH);
-    }
-
-    private SearchCriteria getCriteriaTextInDescription(String text) {
-
-        return new SearchCriteria("description", text, SearchOperation.MATCH);
     }
 }

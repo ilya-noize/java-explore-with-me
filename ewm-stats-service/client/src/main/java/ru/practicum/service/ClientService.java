@@ -41,7 +41,8 @@ public class ClientService extends HttpClient {
 
     public List<ViewStatsDto> get(LocalDateTime start, LocalDateTime end, String[] uris, boolean unique) {
         log.debug("[client] get statistic data by URLs:{}\nPeriod:{} - {}", uris, start, end);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String pattern = "yyyy-MM-dd HH:mm:ss";
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
         String startFormat = start.format(formatter);
         String endFormat = end.format(formatter);
 

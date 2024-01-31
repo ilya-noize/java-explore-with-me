@@ -43,8 +43,8 @@ public interface Constants {
     String USER_NOT_EXISTS = "User" + NOT_EXIST;
 
     static Pageable checkPageable(Integer from, Integer size, Sort sort) {
-        if (from == null) from = Integer.valueOf(FROM);
-        if (size == null) size = Integer.valueOf(SIZE);
+        if (from == null) from = Integer.parseInt(FROM);
+        if (size == null) size = Integer.parseInt(SIZE);
         if (from < 0 || size <= 0) {
             throw new BadRequestException("Pageable incorrect");
         }
