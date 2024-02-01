@@ -10,6 +10,7 @@ import ru.practicum.model.Stat;
 import ru.practicum.model.ViewStats;
 import ru.practicum.repository.StatRepository;
 
+import java.time.DateTimeException;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -37,6 +38,9 @@ public class StatServiceImpl implements StatService {
         log.info("[i] getStatistic(unique = {}) \n start = {}, end = {}, uris = {}",
                 isUnique, start, end, uris);
         boolean isEmptyUris = uris == null || uris.length == 0;
+
+        if (start.isAfter(end)) throw new DateTimeException("start after end!");
+
         List<ViewStats> showStatsFromDb;
         if (isUnique) {
             if (isEmptyUris) {
