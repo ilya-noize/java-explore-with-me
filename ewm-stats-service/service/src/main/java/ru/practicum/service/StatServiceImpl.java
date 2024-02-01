@@ -2,6 +2,7 @@ package ru.practicum.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.HitDto;
 import ru.practicum.ViewStatsDto;
@@ -44,15 +45,19 @@ public class StatServiceImpl implements StatService {
         List<ViewStats> showStatsFromDb;
         if (isUnique) {
             if (isEmptyUris) {
-                showStatsFromDb = repository.getByCreatedBetweenAndUniqueIp(start, end);
+                showStatsFromDb = repository.getByCreatedBetweenAndUniqueIp(start, end,
+                        Sort.by("hits").descending());
             } else {
-                showStatsFromDb = repository.getByCreatedBetweenAndUriInAndUniqueIp(start, end, uris);
+                showStatsFromDb = repository.getByCreatedBetweenAndUriInAndUniqueIp(start, end, uris,
+                        Sort.by("hits").descending());
             }
         } else {
             if (isEmptyUris) {
-                showStatsFromDb = repository.getByCreatedBetween(start, end);
+                showStatsFromDb = repository.getByCreatedBetween(start, end,
+                        Sort.by("created").descending());
             } else {
-                showStatsFromDb = repository.getByCreatedBetweenAndUriIn(start, end, uris);
+                showStatsFromDb = repository.getByCreatedBetweenAndUriIn(start, end, uris,
+                        Sort.by("created").descending());
             }
         }
         return showStatsFromDb.stream()
