@@ -20,9 +20,6 @@ import ru.practicum.event.api.dto.UpdateEventAdminDto;
 import ru.practicum.event.api.dto.UpdateEventDto;
 import ru.practicum.event.api.mapper.EventMapper;
 import ru.practicum.event.api.repository.EventRepository;
-import ru.practicum.event.api.repository.specs.EventSpecification;
-import ru.practicum.event.api.repository.specs.SearchCriteria;
-import ru.practicum.event.api.repository.specs.SearchOperation;
 import ru.practicum.event.entity.Event;
 import ru.practicum.event.request.api.dto.EventRequestDto;
 import ru.practicum.event.request.api.dto.EventRequestStatusUpdateRequest;
@@ -52,6 +49,7 @@ import java.util.Objects;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang3.ObjectUtils.allNotNull;
 import static org.springframework.data.domain.Sort.Direction.DESC;
 import static ru.practicum.constants.Constants.CATEGORY_NOT_EXISTS;
 import static ru.practicum.constants.Constants.DATE_FORMAT;
@@ -267,37 +265,31 @@ public class EventServiceImpl implements EventService {
 
         validateRange(rangeStart, rangeFinish);
         Pageable pageable = checkPageable(from, size, Sort.by(DESC, "id"));
-        EventSpecification eventSpecification = new EventSpecification();
 
-        if (isSizeNotZeroAndIndexZeroNotZero(users)) eventSpecification.add(getCriteriaListUsers(users));
-        if (isSizeNotZeroAndIndexZeroNotZero(categories)) eventSpecification.add(getCriteriaListCategories(categories));
-        if (states != null) eventSpecification.add(getCriteriaStates(states));
-        if (rangeStart != null) eventSpecification.add(getCriteriaRangeStart(rangeStart));
-        if (rangeFinish != null) eventSpecification.add(getCriteriaRangeFinish(rangeFinish));
         List<Event> events;
-        boolean isEmptySpecs = eventSpecification.getList() == null;
-        log.info("[i] get Events By Specification : {}. Empty? - {}", eventSpecification, isEmptySpecs);
-        events = getEventsBySpecs(eventSpecification, pageable);
+        if (allNotNull(users, states, categories, rangeStart, rangeFinish)) {
+            events = getEventsBySearchSpecification(
+                    getSearchAdminSpecification(users, states, categories, rangeStart, rangeFinish),
+                    pageable);
+        } else events = eventRepository.findAll(pageable);
 
         return events.stream()
                 .map(EventMapper.INSTANCE::toDto)
                 .collect(toList());
     }
 
-    /**
-     * patch request query like <u>?users=0&[same array]=0</u>
-     * <p>
-     * boolean b1 = users == List.of(0L);   // false    <br/>
-     * boolean b2 = !users.isEmpty();       // true     <br/>
-     * boolean b3 = users.size() != 0;      // true     <br/>
-     * boolean b4 = users.get(0) != 0;      // false    <br/>
-     *
-     * @param array Массив
-     * @return Размер не ноль и первый элемент не ноль
-     */
-    private boolean isSizeNotZeroAndIndexZeroNotZero(List<Long> array) {
-        if (array == null) return false;
-        return array.size() != 0 && array.get(0) != 0;
+    @Override
+    public EventDto get(Long eventId, HttpServletRequest httpServletRequest) {
+        Event event = getEvent(eventId);
+        if (!event.getState().equals(PUBLISHED)) {
+            throw new NotFoundException(format(EVENT_NOT_EXISTS, eventId));
+        }
+        addHit(httpServletRequest);
+        long uniqueViews = getViews(eventId, true);
+        event.setViews(uniqueViews);
+//        updateViewsByIdEvent(eventId, uniqueViews);
+
+        return EventMapper.INSTANCE.toDto(event);
     }
 
     @Override
@@ -316,7 +308,86 @@ public class EventServiceImpl implements EventService {
         if (rangeStart == null) rangeStart = LocalDateTime.now();
         validateRange(rangeStart, rangeFinish);
 
+        List<Event> events = getEventsBySearchSpecification(
+                getSearchSpecification(text, categories, rangeStart, rangeFinish, paid, onlyAvailable),
+                pageable);
+
+        addHit(httpServletRequest);
+        events.forEach(event -> {
+            Long eventId = event.getId();
+            long uniqueViews = getViews(eventId, false);
+            event.setViews(uniqueViews);
+            updateViewsByIdEvent(eventId, uniqueViews);
+        });
+        eventRepository.saveAll(events);
+
+        return events.stream()
+                .map(EventMapper.INSTANCE::toShortDto)
+                .collect(toList());
+    }
+
+    private List<Specification<Event>> addCategoriesAndRangePeriod(List<Long> categories, LocalDateTime rangeStart, LocalDateTime rangeFinish) {
         List<Specification<Event>> specifications = new ArrayList<>();
+        if (categories != null) {
+            List<Category> categoriesList = categories.stream()
+                    .map(id -> categoryRepository.findById(id).orElse(null))
+                    .filter(Objects::nonNull)
+                    .collect(toList());
+            specifications.add(((root, query, criteriaBuilder) -> criteriaBuilder
+                    .in(root.get("category")).value(categoriesList)));
+        }
+        specifications.add(((root, query, criteriaBuilder) -> criteriaBuilder
+                .greaterThanOrEqualTo(root.get("eventDate"), rangeStart)));
+        if (rangeFinish != null) {
+            specifications.add(((root, query, criteriaBuilder) -> criteriaBuilder
+                    .lessThan(root.get("eventDate"), rangeFinish)));
+        }
+
+        return specifications;
+    }
+
+    private List<Specification<Event>> getSearchAdminSpecification(List<Long> users,
+                                                                   List<String> states,
+                                                                   List<Long> categories,
+                                                                   LocalDateTime rangeStart,
+                                                                   LocalDateTime rangeFinish) {
+        List<Specification<Event>> specifications = addCategoriesAndRangePeriod(categories, rangeStart, rangeFinish);
+
+        if (users != null) {
+            List<User> userList = userRepository.findAllById(users);
+            if (!userList.isEmpty()) {
+                specifications.add(((root, query, criteriaBuilder) -> criteriaBuilder
+                        .in(root.get("initiator")).value(userList)));
+            }
+        }
+
+        if (states != null) {
+            specifications.add(((root, query, criteriaBuilder) -> criteriaBuilder
+                    .in(root.get("state")).value(getEventStateList(states))));
+        }
+
+        return specifications;
+    }
+
+    private List<Constants.EventState> getEventStateList(List<String> states) {
+        List<Constants.EventState> eventStates = new ArrayList<>();
+        for (String state : states) {
+            state = state.toUpperCase();
+            if (Constants.EventState.isValid(state)) {
+                eventStates.add(Constants.EventState.valueOf(state));
+            }
+        }
+
+        return eventStates;
+    }
+
+    private List<Specification<Event>> getSearchSpecification(String text,
+                                                              List<Long> categories,
+                                                              LocalDateTime rangeStart,
+                                                              LocalDateTime rangeFinish,
+                                                              Boolean paid,
+                                                              Boolean onlyAvailable) {
+        List<Specification<Event>> specifications = addCategoriesAndRangePeriod(categories, rangeStart, rangeFinish);
         if (text != null) {
             specifications.add(((root, query, criteriaBuilder) ->
                     criteriaBuilder.or(
@@ -330,19 +401,6 @@ public class EventServiceImpl implements EventService {
                                     "%" + text.toUpperCase() + "%"))));
         }
 
-        LocalDateTime finalRangeStart = rangeStart;
-        specifications.add(((root, query, criteriaBuilder) -> criteriaBuilder
-                .greaterThanOrEqualTo(root.get("eventDate"), finalRangeStart)));
-        specifications.add(((root, query, criteriaBuilder) -> criteriaBuilder
-                .equal(root.get("state"), PUBLISHED)));
-        if (categories != null) {
-            List<Category> categoriesList = categories.stream()
-                    .map(id -> categoryRepository.findById(id).orElse(null))
-                    .filter(Objects::nonNull)
-                    .collect(toList());
-            specifications.add(((root, query, criteriaBuilder) -> criteriaBuilder
-                    .in(root.get("category")).value(categoriesList)));
-        }
         if (paid != null) {
             if (paid) {
                 specifications.add((root, query, criteriaBuilder) -> criteriaBuilder
@@ -352,10 +410,7 @@ public class EventServiceImpl implements EventService {
                         .isFalse(root.get("paid")));
             }
         }
-        if (rangeFinish != null) {
-            specifications.add(((root, query, criteriaBuilder) -> criteriaBuilder
-                    .lessThan(root.get("eventDate"), rangeFinish)));
-        }
+
         if (onlyAvailable != null) {
             if (onlyAvailable) specifications.add(((root, query, criteriaBuilder) ->
                     criteriaBuilder.or(
@@ -366,58 +421,25 @@ public class EventServiceImpl implements EventService {
                                     root.get("participantLimit")))
             ));
         }
-        List<Event> events;
+
+        specifications.add(((root, query, criteriaBuilder) -> criteriaBuilder
+                .equal(root.get("state"), PUBLISHED)));
+
+        return specifications;
+    }
+
+    private List<Event> getEventsBySearchSpecification(List<Specification<Event>> specifications, Pageable pageable) {
         Specification<Event> eventSpecification = specifications.stream()
                 .filter(Objects::nonNull)
                 .reduce(Specification::and)
                 .orElse(null);
-        if (eventSpecification != null) {
-            events = eventRepository.findAll(eventSpecification, pageable).toList();
-        } else {
-            events = eventRepository.findAll(pageable);
-        }
-
-        addHit(httpServletRequest);
-        events.forEach(event -> {
-            Long eventId = event.getId();
-            long views = getViews(eventId, false);
-            event.setViews(views);
-            updateViewsByIdEvent(eventId, views);
-        });
-        eventRepository.saveAll(events);
-
-        return events.stream()
-                .map(EventMapper.INSTANCE::toShortDto)
-                .collect(toList());
-    }
-
-    @Override
-    public EventDto get(Long eventId, HttpServletRequest httpServletRequest) {
-        Event event = getEvent(eventId);
-        if (!event.getState().equals(PUBLISHED)) {
-            throw new NotFoundException(format(EVENT_NOT_EXISTS, eventId));
-        }
-        addHit(httpServletRequest);
-        long uniqueViews = getViews(eventId, true);
-        event.setViews(uniqueViews);
-//        updateViewsByIdEvent(eventId, uniqueViews);
-
-        return EventMapper.INSTANCE.toDto(event);
+        return eventRepository.findAll(eventSpecification, pageable).toList();
     }
 
     private void updateViewsByIdEvent(Long eventId, long uniqueViews) {
         if (eventRepository.updateViewsById(uniqueViews, eventId) > 0) {
             log.debug("[✓] update statistic data");
         } else log.warn("[!] fail update statistic data");
-    }
-
-    private List<Event> getEventsBySpecs(EventSpecification eventSpecification, Pageable pageable) {
-
-        return eventSpecification.getList().isEmpty()
-                ?
-                eventRepository.findAll(eventSpecification, pageable).toList()
-                :
-                eventRepository.findAll(pageable);
     }
 
     private void addHit(HttpServletRequest httpServletRequest) {
@@ -612,54 +634,5 @@ public class EventServiceImpl implements EventService {
                 throw new BadRequestException(error);
             }
         }
-    }
-
-    private SearchCriteria getCriteriaListUsers(List<Long> users) {
-        if (users != null) {
-            return new SearchCriteria(
-                    "initiator",
-                    userRepository.findAllById(users),
-                    SearchOperation.IN
-            );
-        }
-        return null;
-    }
-
-    private SearchCriteria getCriteriaListCategories(List<Long> categories) {
-        if (categories != null) {
-            return new SearchCriteria(
-                    "category",
-                    categoryRepository.findAllById(categories),
-                    SearchOperation.IN
-            );
-        }
-        return null;
-    }
-
-    private SearchCriteria getCriteriaRangeStart(LocalDateTime rangeStart) {
-
-        return new SearchCriteria("eventDate", rangeStart, SearchOperation.GREATER_THAN_EQUAL);
-    }
-
-    private SearchCriteria getCriteriaRangeFinish(LocalDateTime rangeFinish) {
-        return new SearchCriteria("eventDate", rangeFinish, SearchOperation.LESS_THAN);
-    }
-
-    private SearchCriteria getCriteriaStates(List<String> states) {
-        if (states != null) {
-            List<Constants.EventState> eventStates = new ArrayList<>();
-            for (String state : states) {
-                state = state.toUpperCase();
-                if (Constants.EventState.isValid(state)) {
-                    eventStates.add(Constants.EventState.valueOf(state));
-                } else {
-                    throw new BadRequestException("Wrong state");
-                }
-            }
-
-            return new SearchCriteria("state", eventStates, SearchOperation.IN);
-        }
-
-        return null;
     }
 }
