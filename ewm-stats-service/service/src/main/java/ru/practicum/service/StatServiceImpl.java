@@ -22,7 +22,6 @@ import static java.util.stream.Collectors.toList;
 @Slf4j
 public class StatServiceImpl implements StatService {
     private final Sort sortHitsDesc = Sort.by("hits").descending();
-    private final Sort sortIdDesc = Sort.by("id");
     private final StatRepository repository;
     private final StatMapper mapper;
 
@@ -53,9 +52,9 @@ public class StatServiceImpl implements StatService {
             }
         } else {
             if (isEmptyUris) {
-                showStatsFromDb = repository.getByCreatedBetween(start, end, sortIdDesc);
+                showStatsFromDb = repository.getByCreatedBetween(start, end, sortHitsDesc);
             } else {
-                showStatsFromDb = repository.getByCreatedBetweenAndUriIn(start, end, uris, sortIdDesc);
+                showStatsFromDb = repository.getByCreatedBetweenAndUriIn(start, end, uris, sortHitsDesc);
             }
         }
         return showStatsFromDb.stream()

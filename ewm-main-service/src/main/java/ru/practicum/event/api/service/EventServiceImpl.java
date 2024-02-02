@@ -380,9 +380,9 @@ public class EventServiceImpl implements EventService {
         addHit(httpServletRequest);
         events.forEach(event -> {
             Long eventId = event.getId();
-            long uniqueViews = getUniqueViews(eventId);
-            event.setViews(uniqueViews);
-            updateViewsByIdEvent(eventId, uniqueViews);
+            long views = getViews(eventId, false);
+            event.setViews(views);
+            updateViewsByIdEvent(eventId, views);
         });
         eventRepository.saveAll(events);
 
@@ -398,9 +398,9 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundException(format(EVENT_NOT_EXISTS, eventId));
         }
         addHit(httpServletRequest);
-        long uniqueViews = getUniqueViews(eventId);
+        long uniqueViews = getViews(eventId, true);
         event.setViews(uniqueViews);
-        updateViewsByIdEvent(eventId, uniqueViews);
+//        updateViewsByIdEvent(eventId, uniqueViews);
 
         return EventMapper.INSTANCE.toDto(event);
     }
@@ -430,12 +430,12 @@ public class EventServiceImpl implements EventService {
                 .build());
     }
 
-    private long getUniqueViews(long eventId) {
+    private long getViews(long eventId, boolean unique) {
         List<ViewStatsDto> response = statisticService.get(
                 LocalDateTime.now().minusYears(1),
                 LocalDateTime.now(),
                 new String[]{"/events/" + eventId},
-                false);
+                unique);
 
         return !response.isEmpty() ? response.get(0).getHits() : 0;
     }
