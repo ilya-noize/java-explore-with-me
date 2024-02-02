@@ -435,7 +435,7 @@ public class EventServiceImpl implements EventService {
                 LocalDateTime.now().minusYears(1),
                 LocalDateTime.now(),
                 new String[]{"/events/" + eventId},
-                true);
+                false);
 
         return !response.isEmpty() ? response.get(0).getHits() : 0;
     }
