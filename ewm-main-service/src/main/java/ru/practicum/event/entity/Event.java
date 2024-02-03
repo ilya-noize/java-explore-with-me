@@ -14,13 +14,13 @@ import ru.practicum.user.entity.User;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
-import javax.validation.constraints.PositiveOrZero;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 
@@ -74,10 +74,10 @@ public class Event {
             max = MAX_EVENT_DESCRIPTION_LENGTH,
             min = MIN_EVENT_DESCRIPTION_LENGTH
     ) String description;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "initiator_id")
     private User initiator;
     @OneToOne
@@ -97,7 +97,7 @@ public class Event {
     )
     private LocalDateTime eventDate;
     private int confirmedRequests;
-    private @PositiveOrZero int participantLimit;
+    private int participantLimit;
     private boolean requestModeration;
     @Enumerated(EnumType.STRING)
     private Constants.EventState state;
