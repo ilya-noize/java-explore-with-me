@@ -7,6 +7,11 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
 
+/**
+ * <h3>Местоположение</h3>
+ * #{@link #lat} Широта <br/>
+ * #{@link #lon} Долгота <br/>
+ */
 @Data
 @Builder
 @NoArgsConstructor

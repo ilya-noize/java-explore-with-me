@@ -13,6 +13,15 @@ import java.util.List;
 
 import static ru.practicum.constants.Constants.DATE_FORMAT;
 
+/**
+ * <h3>Ошибка</h3>
+ * #{@link #description} Описание ошибки <br/>
+ * #{@link #errors} StackTrace <br/>
+ * #{@link #message} Короткое сообщение <br/>
+ * #{@link #reason} Причина ошибки <br/>
+ * #{@link #status} Статус-код ответа <br/>
+ * #{@link #timestamp} Время <br/>
+ */
 @Getter
 @Setter
 @Builder

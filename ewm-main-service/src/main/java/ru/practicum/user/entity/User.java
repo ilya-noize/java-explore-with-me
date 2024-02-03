@@ -15,6 +15,13 @@ import javax.persistence.Table;
 import static ru.practicum.constants.Constants.MAX_USER_EMAIL_LENGTH;
 import static ru.practicum.constants.Constants.MAX_USER_NAME_LENGTH;
 
+/**
+ *
+ * <p>Пользователи</p>
+ * #{@link #id} ID <br/>
+ * #{@link #name} Name<br/>
+ * #{@link #email} E-Mail<br/>
+ */
 @Entity()
 @Table(name = "users")
 @Getter

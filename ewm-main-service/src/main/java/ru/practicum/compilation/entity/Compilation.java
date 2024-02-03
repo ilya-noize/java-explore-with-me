@@ -16,6 +16,12 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import java.util.List;
 
+/** <p>Подборка событий</p>
+ * #{@link #id} ID
+ * #{@link #pinned} Загрепить на главной <br/>
+ * #{@link #title} Заголовок <br/>
+ * #{@link #events} Список событий <br/>
+ */
 @Entity
 @Getter
 @Setter

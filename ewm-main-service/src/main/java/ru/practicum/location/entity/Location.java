@@ -12,6 +12,12 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
+/**
+ * <h3>Местоположение</h3>
+ * #{@link #id} ID <br/>
+ * #{@link #lat} Широта <br/>
+ * #{@link #lon} Долгота <br/>
+ */
 @Entity
 @Setter
 @Getter

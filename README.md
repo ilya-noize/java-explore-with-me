@@ -1,20 +1,69 @@
 # java-explore-with-me
 
-<!--![stat_svc](stat_svc.png "Stage 1")-->
+### local test-start - in profiles for debug: spring.profiles.active=test
 
-#local test-start
- - in profiles for debug: spring.profiles.active=test, test
+### PR 1  [ stat_svc]()
 
-ewm-main-service/src/main/resources/application.properties
-- comments 4 line  for local test-start
-- spring.datasource.driverClassName=org.postgresql.Driver
-- spring.datasource.url=${SPRING_DATASOURCE_URL}
-- spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
-- spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
+Сущности (Entity)
+=================
 
-ewm-stats-service/client/src/main/resources/application.properties
-- comment line for local test-start
-- stats-server.url=http://localhost:9090
+Пользователи (Users)
+--------------------
 
-- comments line for global prod-start
-- stats-service.url=${STAT_SERVER_URL}
+- email
+- name
+
+Категории событий (Category)
+----------------------------
+
+- name
+
+События (Events)
+----------------
+
+- Заголовок (Title). Максимум = 120 символов. Минимум = 3 символа.
+- Аннотация (Annotation). Максимум = 2000 символов. Минимум = 20
+  символов.
+- Описание (Description). Максимум = 7000 символов. Минимум = 20
+  символов.
+- Категория событий (Category).
+- Инициатор события (Initiator).
+- Место проведения события (Location).
+- Платное/Бесплатное событие (Paid).
+- Дата создания записи (CreatedOn).
+- Дата опубликования события (PublishedOn).
+- дата начала события (EventDate).
+- Количество подтверждённых заявок участников (Confirmed Requests).
+- Установленный предел участников (Participant Limit). Без ограничений =
+  0. 
+- Необходимость проверки заявок на участие в событии (Request
+  Moderation). Да / Нет.
+- Статус события (State).
+- Количество просмотров (Views).
+
+Местоположение (Location)
+-------------------------
+
+- Широта (Latitude)
+- Долгота (Longitude)
+
+Подборки событий (Compilation)
+------------------------------
+
+- (pinned)
+
+Заявки на участие пользователей в событии (Requests)
+----------------------------------------------------
+
+
+Уровень доступа
+===============
+
+Общий (Public)
+--------------
+
+Личный (Private)
+----------------
+
+Административный (Admin)
+------------------------
