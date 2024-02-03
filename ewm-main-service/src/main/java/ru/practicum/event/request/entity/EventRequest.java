@@ -20,6 +20,14 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import java.time.LocalDateTime;
 
+/**
+ * <h3>Заявки пользователей на участие в мероприятии</h3>
+ * {@link #id} ID<br/>
+ * {@link #event} Событие<br/>
+ * {@link #requester} Заявитель<br/>
+ * {@link #created} Время создания заявки<br/>
+ * {@link #status} Статус заявки<br/>
+ */
 @Entity
 @Getter
 @Setter

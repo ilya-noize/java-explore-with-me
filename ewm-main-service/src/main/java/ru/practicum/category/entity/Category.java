@@ -15,6 +15,11 @@ import javax.persistence.Id;
 
 import static ru.practicum.constants.Constants.MAX_CATEGORY_NAME_LENGTH;
 
+/**
+ * <h3>Категории</h3>
+ * {@link #id} ID<br/>
+ * {@link #name} Имя категории<br/>
+ */
 @Entity
 @Builder
 @Getter

@@ -55,7 +55,9 @@ public interface Constants {
     }
 
     /**
-     * Состояние события от администратора/модератора
+     * <h3>Состояние события от администратора/модератора</h3>
+     * {@link #PUBLISH_EVENT} - подтверждена модератором, <br/>
+     * {@link #REJECT_EVENT} - отклонена модератором <br/>
      */
     enum StateAdminAction {
         PUBLISH_EVENT,
@@ -63,7 +65,12 @@ public interface Constants {
     }
 
     /**
-     * Состояние события
+     * <h3>Состояние события</h3>
+     * {@link #PENDING} - на модерации, <br/>
+     * {@link #PUBLISHED} - подтверждена модератором, <br/>
+     * {@link #CANCELED} - отклонена инициатором, <br/>
+     *
+     * {@link #isValid(String)} - проверка строки на соответствие набору статусов <br/>
      */
     enum EventState {
         PENDING,
@@ -79,7 +86,9 @@ public interface Constants {
     }
 
     /**
-     * Сортировка событий в поиске
+     * <h3>Сортировка событий в поиске</h3>
+     * {@link #EVENT_DATE} - по дате начала, <br/>
+     * {@link #VIEWS} - по количеству просмотром <br/>
      */
     enum EventSortState {
         EVENT_DATE,
@@ -87,7 +96,9 @@ public interface Constants {
     }
 
     /**
-     * Состояние события при обновлении
+     * <h3>Состояние события при обновлении</h3>
+     * {@link #SEND_TO_REVIEW} - на модерации, <br/>
+     * {@link #CANCEL_REVIEW} - снята с модерации <br/>
      */
     enum StateAction {
         SEND_TO_REVIEW,
@@ -95,7 +106,11 @@ public interface Constants {
     }
 
     /**
-     * Состояние запроса пользователя на участие в событии для участника
+     * <h3>Состояние запроса пользователя на участие в событии для участника</h3>
+     * {@link #PENDING} - на модерации, <br/>
+     * {@link #CONFIRMED} - подтверждена инициатором, <br/>
+     * {@link #REJECTED} - отклонена инициатором, <br/>
+     * {@link #CANCELED} - отменена заявителем  <br/>
      */
     enum RequestState {
         PENDING,

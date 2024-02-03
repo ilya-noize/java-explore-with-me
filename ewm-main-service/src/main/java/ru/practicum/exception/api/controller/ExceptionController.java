@@ -29,6 +29,19 @@ import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
+/**
+ * <h1>Контролёр пробрасываемых исключений</h1>
+ * {@link #logError(HttpStatus, String, Throwable)} Логирование ошибок <br/>
+ * {@link #handleNotValidException(MethodArgumentNotValidException)} Ошибка валидации (400)<br/>
+ * {@link #handleNotFoundException(NotFoundException)} Ошибка для несуществующего объекта (404)<br/>
+ * {@link #handleConflictException(ConflictException)} Ошибка для данных противоречащих логической структуре данных (409)<br/>
+ * {@link #handleBadRequestException(BadRequestException)} Ошибка неверного запроса (400)<br/>
+ * {@link #handleForbiddenException(ForbiddenException)} Ошибка доступа (403)<br/>
+ * {@link #handleNullPointerException(NullPointerException)} Ошибка для null-значения переменной (500)<br/>
+ * {@link #handleIllegalArgumentException(IllegalArgumentException)} Ошибка неверного аргумента функции (500)<br/>
+ * {@link #handleThrowable(Throwable)} Все остальные ошибки (500)<br/>
+ * {@link #} <br/>
+ */
 @RestControllerAdvice
 @Slf4j
 public class ExceptionController {

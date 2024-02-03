@@ -11,6 +11,10 @@ import javax.validation.constraints.Size;
 import static ru.practicum.constants.Constants.MAX_CATEGORY_NAME_LENGTH;
 import static ru.practicum.constants.Constants.MIN_CATEGORY_NAME_LENGTH;
 
+/**
+ * <h3>Новая категория</h3>
+ * {@link #name} Имя категории
+ */
 @Data
 @Builder
 @NoArgsConstructor
