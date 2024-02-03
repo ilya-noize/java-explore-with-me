@@ -52,12 +52,13 @@ public class ExceptionController {
                 .map(ObjectError::toString)
                 .collect(toList());
 
-        logError(BAD_REQUEST, allErrors.get(0).getDefaultMessage(), e);
+        String defaultMessage = allErrors.get(0).getDefaultMessage();
+        logError(BAD_REQUEST, defaultMessage, e);
 
         return ApiError.builder()
                 .description("Method Argument Not Valid")
                 .errors(errors)
-                .message(allErrors.get(0).getDefaultMessage())
+                .message(defaultMessage)
                 .reason(requireNonNull(result.getFieldError()).getField())
                 .status(BAD_REQUEST)
                 .timestamp(LocalDateTime.now())
@@ -71,11 +72,12 @@ public class ExceptionController {
 
         logError(NOT_FOUND, message, e);
 
+        String shortDescription = "Object not found.";
         return ApiError.builder()
-                .description("Not found object.")
+                .description(shortDescription)
                 .errors(Collections.emptyList())
                 .message(message)
-                .reason("Object not found.")
+                .reason(shortDescription)
                 .status(NOT_FOUND)
                 .timestamp(LocalDateTime.now())
                 .build();
@@ -88,11 +90,12 @@ public class ExceptionController {
 
         logError(CONFLICT, message, e);
 
+        String shortDescription = "Data integrity violation.";
         return ApiError.builder()
-                .description("Data integrity violation.")
+                .description(shortDescription)
                 .errors(Collections.emptyList())
                 .message(message)
-                .reason("Data integrity violation.")
+                .reason(shortDescription)
                 .status(CONFLICT)
                 .timestamp(LocalDateTime.now())
                 .build();
@@ -105,11 +108,12 @@ public class ExceptionController {
 
         logError(BAD_REQUEST, message, e);
 
+        String shortDescription = "Wrong request.";
         return ApiError.builder()
-                .description("Wrong request.")
+                .description(shortDescription)
                 .errors(Collections.emptyList())
                 .message(message)
-                .reason("Wrong request.")
+                .reason(shortDescription)
                 .status(BAD_REQUEST)
                 .timestamp(LocalDateTime.now())
                 .build();
@@ -122,11 +126,12 @@ public class ExceptionController {
 
         logError(FORBIDDEN, message, e);
 
+        String shortDescription = "Access is denied.";
         return ApiError.builder()
-                .description("Access is denied.")
+                .description(shortDescription)
                 .errors(Collections.emptyList())
                 .message(message)
-                .reason("Access is denied.")
+                .reason(shortDescription)
                 .status(FORBIDDEN)
                 .timestamp(LocalDateTime.now())
                 .build();
