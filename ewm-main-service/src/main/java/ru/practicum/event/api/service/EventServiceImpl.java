@@ -71,6 +71,10 @@ public class EventServiceImpl implements EventService {
     private final EventRequestRepository requestRepository;
     private final LocationRepository locationRepository;
     private final ClientService statisticService;
+    private final EventMapper eventMapper;
+    private final EventRequestMapper eventRequestMapper;
+    private final LocationMapper locationMapper;
+
 
     private static void validateEventState(Constants.EventState eventState) {
         if (eventState.equals(PUBLISHED)) {
@@ -85,7 +89,7 @@ public class EventServiceImpl implements EventService {
         LocalDateTime eventDate = dto.getEventDate();
         validateEventDate(eventDate);
 
-        Event event = EventMapper.INSTANCE.toEntity(dto);
+        Event event = eventMapper.toEntity(dto);
         event.setEventDate(eventDate);
         event.setCategory(category);
         event.setInitiator(initiator);
@@ -100,7 +104,7 @@ public class EventServiceImpl implements EventService {
         event.setRequestModeration(requestModeration == null || requestModeration);
         event.setConfirmedRequests(0);
 
-        return EventMapper.INSTANCE.toDto(
+        return eventMapper.toDto(
                 eventRepository.save(event));
     }
 
@@ -112,7 +116,7 @@ public class EventServiceImpl implements EventService {
                 .orElse(emptyList());
 
         return events.stream()
-                .map(EventMapper.INSTANCE::toShortDto)
+                .map(eventMapper::toShortDto)
                 .collect(toList());
     }
 
@@ -123,7 +127,7 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() ->
                         new NotFoundException(format(EVENT_NOT_EXISTS, eventId)));
 
-        return EventMapper.INSTANCE.toDto(event);
+        return eventMapper.toDto(event);
     }
 
     @Override
@@ -165,7 +169,7 @@ public class EventServiceImpl implements EventService {
             }
         }
 
-        return EventMapper.INSTANCE.toDto(
+        return eventMapper.toDto(
                 eventRepository.save(event));
     }
 
@@ -173,7 +177,7 @@ public class EventServiceImpl implements EventService {
     public List<EventRequestDto> getRequestsInEvent(Long userId, Long eventId) {
         isExistsUserLikeInitiatorEvent(userId, eventId);
         return requestRepository.getByEvent_Id(eventId).stream()
-                .map(EventRequestMapper.INSTANCE::toDto)
+                .map(eventRequestMapper::toDto)
                 .collect(toList());
     }
 
@@ -206,7 +210,7 @@ public class EventServiceImpl implements EventService {
                 if (countConfirmedRequests <= eventParticipantLimit) {
                     request.setStatus(CONFIRMED);
                     statusUpdateResponse.getConfirmedRequests()
-                            .add(EventRequestMapper.INSTANCE.toDto(request));
+                            .add(eventRequestMapper.toDto(request));
                     eventRepository.updateConfirmedRequestsById(
                             countConfirmedRequests,
                             eventId);
@@ -217,7 +221,7 @@ public class EventServiceImpl implements EventService {
             } else {
                 request.setStatus(REJECTED);
                 statusUpdateResponse.getRejectedRequests()
-                        .add(EventRequestMapper.INSTANCE.toDto(request));
+                        .add(eventRequestMapper.toDto(request));
             }
         }
         requestRepository.saveAll(requests);
@@ -248,7 +252,7 @@ public class EventServiceImpl implements EventService {
                 dto.getParticipantLimit(),
                 dto.getRequestModeration());
 
-        return EventMapper.INSTANCE.toDto(eventRepository.save(event));
+        return eventMapper.toDto(eventRepository.save(event));
     }
 
     @Override
@@ -274,7 +278,7 @@ public class EventServiceImpl implements EventService {
         } else events = eventRepository.findAll(pageable);
 
         return events.stream()
-                .map(EventMapper.INSTANCE::toDto)
+                .map(eventMapper::toDto)
                 .collect(toList());
     }
 
@@ -289,7 +293,7 @@ public class EventServiceImpl implements EventService {
         event.setViews(uniqueViews);
 //        updateViewsByIdEvent(eventId, uniqueViews);
 
-        return EventMapper.INSTANCE.toDto(event);
+        return eventMapper.toDto(event);
     }
 
     @Override
@@ -322,7 +326,7 @@ public class EventServiceImpl implements EventService {
         eventRepository.saveAll(events);
 
         return events.stream()
-                .map(EventMapper.INSTANCE::toShortDto)
+                .map(eventMapper::toShortDto)
                 .collect(toList());
     }
 
@@ -527,7 +531,7 @@ public class EventServiceImpl implements EventService {
 
     private Location getLocation(LocationDto dto) {
         if (dto != null) {
-            Location location = LocationMapper.INSTANCE.toEntity(dto);
+            Location location = locationMapper.toEntity(dto);
             double lat = location.getLat();
             double lon = location.getLon();
             return locationRepository.getByLatAndLon(lat, lon)

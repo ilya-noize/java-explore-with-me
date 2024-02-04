@@ -22,6 +22,7 @@ import static ru.practicum.constants.Constants.checkPageable;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserRepository repository;
+    private final UserMapper mapper;
 
     @Override
     public UserDto create(NewUserDto dto) {
@@ -30,7 +31,7 @@ public class UserServiceImpl implements UserService {
                 .name(isExistsName(dto.getName()))
                 .email(isExistsEmail(dto.getEmail())).build();
 
-        return UserMapper.INSTANCE.toDto(repository.save(user));
+        return mapper.toDto(repository.save(user));
     }
 
     private String isExistsEmail(String email) {
@@ -56,7 +57,7 @@ public class UserServiceImpl implements UserService {
         }
 
         return allUsersByIds.stream()
-                .map(UserMapper.INSTANCE::toDto)
+                .map(mapper::toDto)
                 .collect(toList());
     }
 

@@ -30,6 +30,7 @@ import static ru.practicum.constants.Constants.checkPageable;
 public class CompilationServiceImpl implements CompilationService {
     private final CompilationRepository compilationRepository;
     private final EventRepository eventRepository;
+    private final CompilationMapper compilationMapper;
 
     @Override
     public CompilationDto create(NewCompilationDto dto) {
@@ -39,7 +40,7 @@ public class CompilationServiceImpl implements CompilationService {
                 .pinned(dto.getPinned() != null ? dto.getPinned() : false)
                 .events(getEvents(dto.getEvents())).build();
 
-        return CompilationMapper.INSTANCE.toDto(
+        return compilationMapper.toDto(
                 compilationRepository.save(compilation));
     }
 
@@ -63,20 +64,20 @@ public class CompilationServiceImpl implements CompilationService {
             compilation.setEvents(getEvents(eventIds));
         }
 
-        return CompilationMapper.INSTANCE.toDto(
+        return compilationMapper.toDto(
                 compilationRepository.save(compilation));
     }
 
     @Override
     public CompilationDto get(Long id) {
-        return CompilationMapper.INSTANCE.toDto(getCompilation(id));
+        return compilationMapper.toDto(getCompilation(id));
     }
 
     @Override
     public List<CompilationDto> getAll(Integer from, Integer size) {
         Pageable pageable = checkPageable(from, size, null);
         return compilationRepository.findAll(pageable).stream()
-                .map(CompilationMapper.INSTANCE::toDto)
+                .map(compilationMapper::toDto)
                 .collect(toList());
     }
 

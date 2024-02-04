@@ -26,13 +26,14 @@ import static ru.practicum.constants.Constants.checkPageable;
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
     private final EventRepository eventRepository;
+    private final CategoryMapper categoryMapper;
 
     @Override
     public CategoryDto create(NewCategoryDto dto) {
         isExistsName(dto.getName());
-        Category category = CategoryMapper.INSTANCE.toEntity(dto);
+        Category category = categoryMapper.toEntity(dto);
 
-        return CategoryMapper.INSTANCE.toDto(
+        return categoryMapper.toDto(
                 categoryRepository.save(category));
     }
 
@@ -45,14 +46,14 @@ public class CategoryServiceImpl implements CategoryService {
             category.setName(isExistsName(dtoName));
         }
 
-        return CategoryMapper.INSTANCE.toDto(
+        return categoryMapper.toDto(
                 categoryRepository.save(category));
     }
 
     @Override
     public CategoryDto get(Long id) {
 
-        return CategoryMapper.INSTANCE.toDto(getCategory(id));
+        return categoryMapper.toDto(getCategory(id));
     }
 
     @Override
@@ -60,7 +61,7 @@ public class CategoryServiceImpl implements CategoryService {
         Pageable pageable = checkPageable(from, size, null);
         return categoryRepository.findAll(pageable)
                 .stream()
-                .map(CategoryMapper.INSTANCE::toDto)
+                .map(categoryMapper::toDto)
                 .collect(toList());
     }
 

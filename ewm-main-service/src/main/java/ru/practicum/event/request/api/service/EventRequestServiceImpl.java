@@ -37,6 +37,7 @@ public class EventRequestServiceImpl implements EventRequestService {
     private final EventRequestRepository requestRepository;
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
+    private final EventRequestMapper eventRequestMapper;
 
     @Override
     public List<EventRequestDto> getAllRequests(Long userId, Integer from, Integer size) {
@@ -46,7 +47,7 @@ public class EventRequestServiceImpl implements EventRequestService {
                 .orElse(new ArrayList<>());
 
         return requests.stream()
-                .map(EventRequestMapper.INSTANCE::toDto)
+                .map(eventRequestMapper::toDto)
                 .collect(toList());
     }
 
@@ -75,7 +76,7 @@ public class EventRequestServiceImpl implements EventRequestService {
                 .status(getEventRequestState(event))
                 .build();
 
-        return EventRequestMapper.INSTANCE.toDto(
+        return eventRequestMapper.toDto(
                 requestRepository.save(request));
     }
 
@@ -88,7 +89,7 @@ public class EventRequestServiceImpl implements EventRequestService {
         }
         request.setStatus(CANCELED);
 
-        return EventRequestMapper.INSTANCE.toDto(requestRepository.save(request));
+        return eventRequestMapper.toDto(requestRepository.save(request));
     }
 
     /**
