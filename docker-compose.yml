@@ -2,15 +2,17 @@ version: '3.1'
 services:
   stats-server:
     build: ewm-stats-service/service
-    container_name: stats-server
+    container_name: stats-service
     depends_on:
       - stats-db
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/stats_db
     env_file:
-      - "pass.env"
+      - "pass_stats.env"
     ports:
       - "9090:9090"
+    networks:
+      - ewm_backend
 
   stats-db:
     image: postgres:14-alpine
@@ -18,15 +20,38 @@ services:
     environment:
       - POSTGRES_DB=stats_db
     env_file:
-      - "pass.env"
+      - "pass_stats.env"
     ports:
       - "6541:5432"
+    networks:
+      - ewm_backend
 
   ewm-service:
+    image: ewm-main
     build: ewm-main-service
-    container_name: emw-service
+    container_name: main-service
     ports:
       - "8080:8080"
+    env_file:
+      - "pass_main.env"
+    depends_on:
+      - ewm-db
+    networks:
+      - ewm_backend
 
-#  ewm-db:
-#    image: postgres:14-alpine
+  ewm-db:
+    image: postgres:14-alpine
+    container_name: ewm_db
+    ports:
+      - "6542:5432"
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    env_file:
+      - "pass_main.env"
+    networks:
+      - ewm_backend
+
+networks:
+  ewm_backend:
+    driver: bridge

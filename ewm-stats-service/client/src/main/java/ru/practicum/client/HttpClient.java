@@ -15,17 +15,17 @@ import java.util.Map;
 import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpMethod.POST;
 
-public class Client {
+public class HttpClient {
     protected final RestTemplate rest;
 
-    public Client(RestTemplate rest) {
+    public HttpClient(RestTemplate rest) {
         this.rest = rest;
     }
 
     protected ResponseEntity<List<ViewStatsDto>> get(@Nullable Map<String, Object> parameters, List<ViewStatsDto> response) {
         return makeAndSendRequest(
                 GET,
-                "/stats?start={start}&end={end}&uris={uris}&uniq={unique}",
+                "/stats?start={start}&end={end}&uris={uris}&unique={unique}",
                 parameters,
                 null,
                 response);
@@ -50,17 +50,17 @@ public class Client {
         assert body != null;
         HttpEntity<T> requestEntity = new HttpEntity<>(body);
         Class kClass = response.getClass();
-        ResponseEntity<K> shareitServerResponse;
+        ResponseEntity<K> serverResponse;
         try {
             if (parameters != null) {
-                shareitServerResponse = rest.exchange(
+                serverResponse = rest.exchange(
                         path,
                         method,
                         requestEntity,
                         kClass,
                         parameters);
             } else {
-                shareitServerResponse = rest.exchange(
+                serverResponse = rest.exchange(
                         path,
                         method,
                         requestEntity,
@@ -71,7 +71,7 @@ public class Client {
                     .status(e.getStatusCode())
                     .body(e.getResponseBodyAsByteArray());
         }
-        return prepareGatewayResponse(shareitServerResponse);
+        return prepareGatewayResponse(serverResponse);
     }
 
     private static <T> ResponseEntity<T> prepareGatewayResponse(ResponseEntity<T> response) {

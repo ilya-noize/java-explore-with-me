@@ -1,5 +1,8 @@
 package ru.practicum.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -9,8 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import ru.practicum.HitDto;
 import ru.practicum.ViewStatsDto;
-import ru.practicum.client.Client;
+import ru.practicum.client.HttpClient;
 
+import java.time.DateTimeException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -18,10 +22,9 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class ClientService extends Client {
+@Slf4j
+public class ClientService extends HttpClient {
     private static final String API_PREFIX = "/";
-    public static final String PATTERN = "yyyy-MM-dd HH:mm:ss";
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(PATTERN);
 
     @Autowired
     public ClientService(@Value("${stats-server.url}") String serverUrl, RestTemplateBuilder builder) {
@@ -31,22 +34,42 @@ public class ClientService extends Client {
                 .build());
     }
 
-    public HitDto post(HitDto dto) {
-        ResponseEntity<HitDto> responseEntity = this.post(dto, new HitDto());
-        return responseEntity.getBody();
+    public void post(HitDto dto) {
+        log.debug("[client] save statistic data by URL:{}\nIP:{}\nAPP:{}",
+                dto.getUri(), dto.getId(), dto.getApp());
+        this.post(dto, new HitDto());
     }
 
-    public List<ViewStatsDto> get(LocalDateTime start, LocalDateTime end, String[] uris, String unique) {
-        Map<String, Object> map = Map.of(
-                "start", start.format(FORMATTER),
-                "end", end.format(FORMATTER),
+    public List<ViewStatsDto> get(LocalDateTime start, LocalDateTime end, String[] uris, boolean unique) {
+        if (start.isAfter(end)) throw new DateTimeException("start after end!");
+
+        log.debug("[client] get statistic data by URLs:{}\nPeriod:{} - {}\nUnique = {}", uris, start, end, unique);
+        String pattern = "yyyy-MM-dd HH:mm:ss";
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
+        String startFormat = start.format(formatter);
+        String endFormat = end.format(formatter);
+
+        Map<String, Object> parameters = Map.of(
+                "start", startFormat,
+                "end", endFormat,
                 "uris", String.join(",", uris),
                 "unique", unique
 
         );
-        ResponseEntity<List<ViewStatsDto>> responseEntity =
-                this.get(map, new ArrayList<>());
 
-        return responseEntity.getBody();
+        ResponseEntity<List<ViewStatsDto>> response = this.get(parameters, new ArrayList<>());
+
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            ObjectMapper mapper = new ObjectMapper();
+            try {
+                log.debug("[]");
+                return List.of(mapper.readValue(
+                        mapper.writeValueAsString(response.getBody()),
+                        ViewStatsDto[].class));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e.getMessage());
+            }
+        }
+        return null;
     }
 }
