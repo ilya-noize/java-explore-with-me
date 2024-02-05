@@ -9,11 +9,13 @@ import lombok.Setter;
 import ru.practicum.category.api.dto.CategoryDto;
 import ru.practicum.constants.Constants;
 import ru.practicum.location.entity.Location;
+import ru.practicum.moderate.api.dto.ReviewDto;
 import ru.practicum.user.api.dto.UserShortDto;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.PositiveOrZero;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static ru.practicum.constants.Constants.DATE_FORMAT;
 
@@ -49,4 +51,5 @@ public final class EventDto {
     private boolean requestModeration;
     private Constants.EventState state;
     private long views;
+    private List<ReviewDto> reviews;
 }

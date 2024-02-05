@@ -9,6 +9,12 @@ import ru.practicum.exception.BadRequestException;
 
 public interface Constants {
 
+    int MIN_MODERATE_COMMENT_LENGTH = 3;
+    int MAX_MODERATE_COMMENT_LENGTH = 128;
+
+    int MIN_MODERATE_REASON_LENGTH = 3;
+    int MAX_MODERATE_REASON_LENGTH = 1024;
+
     int MIN_COMPILATION_TITLE_LENGTH = 3;
     int MAX_COMPILATION_TITLE_LENGTH = 50;
 
@@ -41,6 +47,7 @@ public interface Constants {
     String EVENT_NOT_EXISTS = "Event" + NOT_EXIST;
     String EVENT_REQUEST_NOT_EXISTS = "Event request" + NOT_EXIST;
     String USER_NOT_EXISTS = "User" + NOT_EXIST;
+    String REVIEW_NOT_EXISTS = "Review" + NOT_EXIST;
 
     static Pageable checkPageable(Integer from, Integer size, Sort sort) {
         if (from == null) from = Integer.parseInt(FROM);
