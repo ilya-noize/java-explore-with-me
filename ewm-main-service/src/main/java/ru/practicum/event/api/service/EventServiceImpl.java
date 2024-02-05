@@ -65,6 +65,7 @@ import static ru.practicum.constants.Constants.checkPageable;
 @Slf4j
 @RequiredArgsConstructor
 public class EventServiceImpl implements EventService {
+    private static final String EVENT_DATE = "eventDate";
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
@@ -146,26 +147,14 @@ public class EventServiceImpl implements EventService {
             event.setEventDate(newEventDate);
         }
 
-        updateTitleAnnotationDescriptionCategoryLocationPaidParticipantLimitModeration(event,
-                dto.getTitle(),
-                dto.getAnnotation(),
-                dto.getDescription(),
-                dto.getCategory(),
-                getLocation(dto.getLocation()),
-                dto.getPaid(),
-                dto.getParticipantLimit(),
-                dto.getRequestModeration()
-        );
+        updateTitleAnnotDescrCategoryLocationPaidParLimModer(event, toAdminDto(dto));
 
         Constants.StateAction stateAction = dto.getStateAction();
         if (stateAction != null) {
-            switch (stateAction) {
-                case SEND_TO_REVIEW:
-                    event.setState(Constants.EventState.PENDING);
-                    break;
-                case CANCEL_REVIEW:
-                    event.setState(Constants.EventState.CANCELED);
-                    break;
+            if (stateAction == Constants.StateAction.SEND_TO_REVIEW) {
+                event.setState(Constants.EventState.PENDING);
+            } else if (stateAction == Constants.StateAction.CANCEL_REVIEW) {
+                event.setState(Constants.EventState.CANCELED);
             }
         }
 
@@ -242,15 +231,7 @@ public class EventServiceImpl implements EventService {
             event.setPublishedOn(LocalDateTime.now());
         }
 
-        updateTitleAnnotationDescriptionCategoryLocationPaidParticipantLimitModeration(event,
-                dto.getTitle(),
-                dto.getAnnotation(),
-                dto.getDescription(),
-                dto.getCategory(),
-                getLocation(dto.getLocation()),
-                dto.getPaid(),
-                dto.getParticipantLimit(),
-                dto.getRequestModeration());
+        updateTitleAnnotDescrCategoryLocationPaidParLimModer(event, dto);
 
         return eventMapper.toDto(eventRepository.save(event));
     }
@@ -291,7 +272,6 @@ public class EventServiceImpl implements EventService {
         addHit(httpServletRequest);
         long uniqueViews = getViews(eventId, true);
         event.setViews(uniqueViews);
-//        updateViewsByIdEvent(eventId, uniqueViews);
 
         return eventMapper.toDto(event);
     }
@@ -330,6 +310,20 @@ public class EventServiceImpl implements EventService {
                 .collect(toList());
     }
 
+    private UpdateEventAdminDto toAdminDto(UpdateEventDto dto) {
+        return UpdateEventAdminDto.builder()
+                .title(dto.getTitle())
+                .annotation(dto.getAnnotation())
+                .description(dto.getDescription())
+                .category(dto.getCategory())
+                .location(dto.getLocation())
+                .paid(dto.getPaid())
+                .eventDate(dto.getEventDate())
+                .participantLimit(dto.getParticipantLimit())
+                .requestModeration(dto.getRequestModeration())
+                .stateAction(null).build();
+    }
+
     private List<Specification<Event>> addCategoriesAndRangePeriod(List<Long> categories, LocalDateTime rangeStart, LocalDateTime rangeFinish) {
         List<Specification<Event>> specifications = new ArrayList<>();
         if (categories != null) {
@@ -341,10 +335,10 @@ public class EventServiceImpl implements EventService {
                     .in(root.get("category")).value(categoriesList)));
         }
         specifications.add(((root, query, criteriaBuilder) -> criteriaBuilder
-                .greaterThanOrEqualTo(root.get("eventDate"), rangeStart)));
+                .greaterThanOrEqualTo(root.get(EVENT_DATE), rangeStart)));
         if (rangeFinish != null) {
             specifications.add(((root, query, criteriaBuilder) -> criteriaBuilder
-                    .lessThan(root.get("eventDate"), rangeFinish)));
+                    .lessThan(root.get(EVENT_DATE), rangeFinish)));
         }
 
         return specifications;
@@ -415,8 +409,8 @@ public class EventServiceImpl implements EventService {
             }
         }
 
-        if (onlyAvailable != null) {
-            if (onlyAvailable) specifications.add(((root, query, criteriaBuilder) ->
+        if (onlyAvailable != null && onlyAvailable) {
+            specifications.add(((root, query, criteriaBuilder) ->
                     criteriaBuilder.or(
                             criteriaBuilder.equal(
                                     root.get("participantLimit"), 0),
@@ -466,16 +460,18 @@ public class EventServiceImpl implements EventService {
         return !response.isEmpty() ? response.get(0).getHits() : 0;
     }
 
-    private void updateTitleAnnotationDescriptionCategoryLocationPaidParticipantLimitModeration(
+    private void updateTitleAnnotDescrCategoryLocationPaidParLimModer(
             Event event,
-            String title,
-            String annotation,
-            String description,
-            Long categoryId,
-            Location location,
-            Boolean paid,
-            Integer participantLimit,
-            Boolean requestModeration) {
+            UpdateEventAdminDto dto) {
+        String title = dto.getTitle();
+        String annotation = dto.getAnnotation();
+        String description = dto.getDescription();
+        Long categoryId = dto.getCategory();
+        Location location = getLocation(dto.getLocation());
+        Boolean paid = dto.getPaid();
+        Integer participantLimit = dto.getParticipantLimit();
+        Boolean requestModeration = dto.getRequestModeration();
+
         event.setTitle(title != null ? title : event.getTitle());
         event.setAnnotation(annotation != null ? annotation : event.getAnnotation());
         event.setDescription(description != null ? description : event.getDescription());
@@ -570,7 +566,7 @@ public class EventServiceImpl implements EventService {
             case VIEWS:
                 return Sort.by("views").descending();
             case EVENT_DATE:
-                return Sort.by("eventDate").descending();
+                return Sort.by(EVENT_DATE).descending();
             default:
                 throw new BadRequestException("Wrong sorting parameters");
         }
