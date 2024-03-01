@@ -44,12 +44,17 @@ public class ReviewService {
     private final Sort orderByCreatedDesc = Sort.by(CREATED).descending();
 
     public EventDto save(long eventId, NewReviewDto dto) {
-        Event event = getEvent(eventId);
+        isExistsEvent(eventId);
         if (dto.getEventId().equals(eventId)) {
             throw new BadRequestException(format("Review not for this event (ID:%d)", eventId));
         }
-        reviewRepository.save(reviewMapper.toEntity(dto));
+
+        Event event = getEvent(eventId);
         event.setReviews(getReviewsForEvent(eventId));
+
+        Review review = reviewMapper.toEntity(dto);
+        review.setCreated(LocalDateTime.now());
+        reviewRepository.save(review);
 
         return eventMapper.toDto(event);
     }

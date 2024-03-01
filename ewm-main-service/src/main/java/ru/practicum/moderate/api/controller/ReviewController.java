@@ -33,7 +33,7 @@ public class ReviewController {
     @PatchMapping("/events/{eventId}/review")
     @ResponseStatus(HttpStatus.CREATED)
     public EventDto save(@PathVariable Long eventId,
-                                @RequestBody NewReviewDto dto) {
+                         @RequestBody NewReviewDto dto) {
         log.debug("[i] begin review for event with ID:{}", eventId);
 
         return service.save(eventId, dto);
