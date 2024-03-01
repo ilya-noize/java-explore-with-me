@@ -1,0 +1,128 @@
+{
+	"info": {
+		"_postman_id": "ace817e1-86e3-4bca-9de7-43fb302e19f6",
+		"name": "Moderation",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "28278571"
+	},
+	"item": [
+		{
+			"name": "Moderation",
+			"item": [
+				{
+					"name": "New User1",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"User 1\",\r\n    \"email\": \"user1@gmail.com\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/admin/users",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"admin",
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "New Category",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"category 1\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/admin/categories",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"admin",
+								"categories"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "New Event1 By User1",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"annotation\": \"Voluptatem dolorum est consectetur ullam. Est deleniti laudantium dolor rerum qui. Est non dolorem praesentium nulla assumenda consequuntur quod. Ex vel labore odio repellat alias.\",\r\n    \"category\": 1,\r\n    \"description\": \"Laboriosam expedita sequi deserunt qui molestiae architecto vero nobis est. Explicabo magni eum. Optio est molestias maxime assumenda eos vel pariatur. Quos impedit quod beatae.\\n \\rSapiente corporis quisquam. Iste reprehenderit eveniet aut eius quia enim. Quia temporibus veritatis sint ut. Temporibus rerum quam similique sequi earum odit cum consequatur. Soluta aut dignissimos sed expedita tempore fugiat inventore quasi non.\\n \\rVero nihil dolore alias esse aut laudantium beatae. Eius fuga corporis deserunt quam repellendus repellendus. Id molestias quibusdam. Eligendi modi qui sunt iste dolorum. Officia ipsa et et sed commodi voluptate quia aliquid. Et ut veritatis qui repudiandae consequatur esse minima.\",\r\n    \"eventDate\": \"2024-02-25 16:51:44\",\r\n    \"location\": {\r\n        \"lat\": -3.2106,\r\n        \"lon\": -93.1523\r\n    },\r\n    \"paid\": \"true\",\r\n    \"participantLimit\": \"557\",\r\n    \"requestModeration\": \"true\",\r\n    \"title\": \"Optio porro soluta est.\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/users/1/events",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"users",
+								"1",
+								"events"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "New Review1 for Event1",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "/events/1/review",
+							"path": [
+								"events",
+								"1",
+								"review"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
