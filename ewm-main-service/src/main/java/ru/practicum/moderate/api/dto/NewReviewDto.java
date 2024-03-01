@@ -19,7 +19,6 @@ import static ru.practicum.constants.Constants.MIN_MODERATE_REASON_LENGTH;
 @NoArgsConstructor
 @AllArgsConstructor
 public class NewReviewDto {
-    private Long id;
     private Long eventId;
     private @NotNull String state;
     @Size(

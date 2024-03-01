@@ -12,6 +12,7 @@ import ru.practicum.moderate.entity.Review;
 )
 public interface ReviewMapper {
 
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "created", ignore = true)
     @Mapping(target = "event.id", source = "dto.eventId")
     Review toEntity(NewReviewDto dto);
