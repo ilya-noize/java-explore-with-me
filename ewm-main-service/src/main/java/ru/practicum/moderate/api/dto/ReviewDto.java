@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class ReviewDto {
     private Long id;
-    private Long eventId;
     private LocalDateTime created;
     private String state;
     private String reason;

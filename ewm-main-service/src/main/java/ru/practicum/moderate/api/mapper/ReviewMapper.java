@@ -17,6 +17,5 @@ public interface ReviewMapper {
     @Mapping(target = "event.id", source = "dto.eventId")
     Review toEntity(NewReviewDto dto);
 
-    @Mapping(target = "eventId", source = "entity.event.id")
     ReviewDto toDto(Review entity);
 }
