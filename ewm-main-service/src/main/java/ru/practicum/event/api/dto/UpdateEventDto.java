@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.practicum.constants.Constants;
+import ru.practicum.event.entity.StateAction;
 import ru.practicum.location.dto.LocationDto;
 
 import javax.validation.constraints.PositiveOrZero;
@@ -60,5 +60,5 @@ public final class UpdateEventDto {
     private LocalDateTime eventDate;
     private @PositiveOrZero Integer participantLimit;
     private Boolean requestModeration;
-    private Constants.StateAction stateAction;
+    private StateAction stateAction;
 }

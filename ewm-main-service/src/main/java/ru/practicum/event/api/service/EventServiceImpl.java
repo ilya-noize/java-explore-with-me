@@ -11,8 +11,6 @@ import ru.practicum.HitDto;
 import ru.practicum.ViewStatsDto;
 import ru.practicum.category.api.repository.CategoryRepository;
 import ru.practicum.category.entity.Category;
-import ru.practicum.constants.Constants;
-import ru.practicum.constants.Constants.StateAdminAction;
 import ru.practicum.event.api.dto.EventDto;
 import ru.practicum.event.api.dto.EventShortDto;
 import ru.practicum.event.api.dto.NewEventDto;
@@ -21,6 +19,11 @@ import ru.practicum.event.api.dto.UpdateEventDto;
 import ru.practicum.event.api.mapper.EventMapper;
 import ru.practicum.event.api.repository.EventRepository;
 import ru.practicum.event.entity.Event;
+import ru.practicum.event.entity.EventSortState;
+import ru.practicum.event.entity.EventState;
+import ru.practicum.event.entity.RequestState;
+import ru.practicum.event.entity.StateAction;
+import ru.practicum.event.entity.StateAdminAction;
 import ru.practicum.event.request.api.dto.EventRequestDto;
 import ru.practicum.event.request.api.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.event.request.api.dto.EventRequestStatusUpdateResult;
@@ -54,12 +57,12 @@ import static org.springframework.data.domain.Sort.Direction.DESC;
 import static ru.practicum.constants.Constants.CATEGORY_NOT_EXISTS;
 import static ru.practicum.constants.Constants.DATE_FORMAT;
 import static ru.practicum.constants.Constants.EVENT_NOT_EXISTS;
-import static ru.practicum.constants.Constants.EventState.PUBLISHED;
-import static ru.practicum.constants.Constants.RequestState.CONFIRMED;
-import static ru.practicum.constants.Constants.RequestState.PENDING;
-import static ru.practicum.constants.Constants.RequestState.REJECTED;
 import static ru.practicum.constants.Constants.USER_NOT_EXISTS;
 import static ru.practicum.constants.Constants.checkPageable;
+import static ru.practicum.event.entity.EventState.PUBLISHED;
+import static ru.practicum.event.entity.RequestState.CONFIRMED;
+import static ru.practicum.event.entity.RequestState.PENDING;
+import static ru.practicum.event.entity.RequestState.REJECTED;
 
 @Service
 @Slf4j
@@ -77,7 +80,7 @@ public class EventServiceImpl implements EventService {
     private final LocationMapper locationMapper;
 
 
-    private static void validateEventState(Constants.EventState eventState) {
+    private static void validateEventState(EventState eventState) {
         if (eventState.equals(PUBLISHED)) {
             throw new ConflictException("Event is published.");
         }
@@ -94,7 +97,7 @@ public class EventServiceImpl implements EventService {
         event.setEventDate(eventDate);
         event.setCategory(category);
         event.setInitiator(initiator);
-        event.setState(Constants.EventState.PENDING);
+        event.setState(EventState.PENDING);
         event.setLocation(getLocation(dto.getLocation()));
         event.setCreatedOn(LocalDateTime.now());
         Boolean paid = dto.getPaid();
@@ -136,7 +139,7 @@ public class EventServiceImpl implements EventService {
         User initiator = getUser(userId);
         Event event = eventRepository.getByInitiatorAndId(initiator, eventId)
                 .orElseThrow(() -> new NotFoundException(EVENT_NOT_EXISTS));
-        Constants.EventState eventState = event.getState();
+        EventState eventState = event.getState();
         if (eventState.equals(PUBLISHED)) {
             throw new ConflictException("Can only change canceled events or events in the waiting state of moderation");
         }
@@ -149,12 +152,12 @@ public class EventServiceImpl implements EventService {
 
         updateTitleAnnotDescrCategoryLocationPaidParLimModer(event, toAdminDto(dto));
 
-        Constants.StateAction stateAction = dto.getStateAction();
+        StateAction stateAction = dto.getStateAction();
         if (stateAction != null) {
-            if (stateAction == Constants.StateAction.SEND_TO_REVIEW) {
-                event.setState(Constants.EventState.PENDING);
-            } else if (stateAction == Constants.StateAction.CANCEL_REVIEW) {
-                event.setState(Constants.EventState.CANCELED);
+            if (stateAction == StateAction.SEND_TO_REVIEW) {
+                event.setState(EventState.PENDING);
+            } else if (stateAction == StateAction.CANCEL_REVIEW) {
+                event.setState(EventState.CANCELED);
             }
         }
 
@@ -185,10 +188,10 @@ public class EventServiceImpl implements EventService {
         validateLimitRequests(eventParticipantLimit, countConfirmedRequests);
 
         EventRequestStatusUpdateResult statusUpdateResponse = new EventRequestStatusUpdateResult();
-        Constants.RequestState updateStatus = dto.getStatus();
+        RequestState updateStatus = dto.getStatus();
         for (EventRequest request : requests) {
 
-            Constants.RequestState status = request.getStatus();
+            RequestState status = request.getStatus();
 
             if (!status.equals(PENDING)) {
                 throw new ConflictException((format("Wrong request state: %s", status)));
@@ -223,9 +226,9 @@ public class EventServiceImpl implements EventService {
         validateAdminTimeMoment(dto.getEventDate());
         validateAdminTimeMoment(event.getEventDate());
         validateEventState(event.getState());
-        Constants.StateAdminAction stateAction = dto.getStateAction();
-        Constants.EventState eventState = event.getState();
-        Constants.EventState modifyEventState = getModifyEventState(stateAction, eventState);
+        StateAdminAction stateAction = dto.getStateAction();
+        EventState eventState = event.getState();
+        EventState modifyEventState = getModifyEventState(stateAction, eventState);
         event.setState(modifyEventState);
         if (modifyEventState.equals(PUBLISHED)) {
             event.setPublishedOn(LocalDateTime.now());
@@ -367,12 +370,12 @@ public class EventServiceImpl implements EventService {
         return specifications;
     }
 
-    private List<Constants.EventState> getEventStateList(List<String> states) {
-        List<Constants.EventState> eventStates = new ArrayList<>();
+    private List<EventState> getEventStateList(List<String> states) {
+        List<EventState> eventStates = new ArrayList<>();
         for (String state : states) {
             state = state.toUpperCase();
-            if (Constants.EventState.isValid(state)) {
-                eventStates.add(Constants.EventState.valueOf(state));
+            if (EventState.isValid(state)) {
+                eventStates.add(EventState.valueOf(state));
             }
         }
 
@@ -536,14 +539,14 @@ public class EventServiceImpl implements EventService {
         return null;
     }
 
-    private Constants.EventState getModifyEventState(StateAdminAction stateAction,
-                                                     Constants.EventState eventState) {
+    private EventState getModifyEventState(StateAdminAction stateAction,
+                                           EventState eventState) {
         String eventStateErrorMessage = "The event was moderated. " +
                 "Current status of the event: %s";
         if (stateAction == null) return PUBLISHED;
         switch (stateAction) {
             case PUBLISH_EVENT:
-                if (eventState != Constants.EventState.PENDING) {
+                if (eventState != EventState.PENDING) {
                     throw new ConflictException(format(eventStateErrorMessage, eventState));
                 }
                 return PUBLISHED;
@@ -551,7 +554,7 @@ public class EventServiceImpl implements EventService {
                 if (eventState == PUBLISHED) {
                     throw new ConflictException(format(eventStateErrorMessage, eventState));
                 }
-                return Constants.EventState.CANCELED;
+                return EventState.CANCELED;
             default:
                 throw new ForbiddenException(format("Wrong status of" +
                         " the administrator's action: %s", stateAction));
@@ -560,8 +563,8 @@ public class EventServiceImpl implements EventService {
 
     private Sort getSort(String sort) {
         if (sort == null) return null;
-        Constants.EventSortState anEnum = EnumUtils.getEnum(
-                Constants.EventSortState.class, sort.toUpperCase());
+        EventSortState anEnum = EnumUtils.getEnum(
+                EventSortState.class, sort.toUpperCase());
         switch (anEnum) {
             case VIEWS:
                 return Sort.by("views").descending();

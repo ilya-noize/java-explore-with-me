@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import ru.practicum.constants.Constants.RequestState;
+import ru.practicum.event.entity.RequestState;
 
 import java.util.List;
 

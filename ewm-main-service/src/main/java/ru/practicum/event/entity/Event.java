@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ru.practicum.category.entity.Category;
-import ru.practicum.constants.Constants;
 import ru.practicum.location.entity.Location;
 import ru.practicum.moderate.entity.Review;
 import ru.practicum.user.entity.User;
@@ -103,7 +102,7 @@ public class Event {
     private int participantLimit;
     private boolean requestModeration;
     @Enumerated(EnumType.STRING)
-    private Constants.EventState state;
+    private EventState state;
     private long views;
     @Transient
     private List<Review> reviews;

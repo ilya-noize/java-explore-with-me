@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ru.practicum.category.api.dto.CategoryDto;
-import ru.practicum.constants.Constants;
+import ru.practicum.event.entity.EventState;
 import ru.practicum.location.entity.Location;
 import ru.practicum.moderate.api.dto.ReviewDto;
 import ru.practicum.user.api.dto.UserShortDto;
@@ -49,7 +49,7 @@ public final class EventDto {
     private int confirmedRequests;
     private @PositiveOrZero int participantLimit;
     private boolean requestModeration;
-    private Constants.EventState state;
+    private EventState state;
     private long views;
     private List<ReviewDto> reviews;
 }
