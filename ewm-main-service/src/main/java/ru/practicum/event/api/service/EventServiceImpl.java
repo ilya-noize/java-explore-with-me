@@ -156,7 +156,7 @@ public class EventServiceImpl implements EventService {
         if (stateAction != null) {
             if (stateAction == StateAction.SEND_TO_REVIEW) {
                 event.setState(EventState.PENDING);
-            } else if (stateAction == StateAction.CANCEL_REVIEW) {
+            } else {
                 event.setState(EventState.CANCELED);
             }
         }

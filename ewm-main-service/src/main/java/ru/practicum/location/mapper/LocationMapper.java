@@ -5,7 +5,9 @@ import org.mapstruct.Mapping;
 import ru.practicum.location.dto.LocationDto;
 import ru.practicum.location.entity.Location;
 
-@Mapper(componentModel = "spring")
+import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
+
+@Mapper(componentModel = SPRING)
 public interface LocationMapper {
 
     @Mapping(target = "id", ignore = true)

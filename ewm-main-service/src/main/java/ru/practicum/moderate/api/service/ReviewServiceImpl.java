@@ -38,8 +38,8 @@ import static ru.practicum.constants.Constants.checkPageable;
 @RequiredArgsConstructor
 public class ReviewServiceImpl implements ReviewService {
     private static final String CREATED = "created";
-    private static final String STATE1 = "state";
-    private static final String REASON1 = "reason";
+    private static final String STATE = "state";
+    private static final String REASON = "reason";
     private static final String EVENT_ID = "event_id";
     private final ReviewRepository reviewRepository;
     private final EventRepository eventRepository;
@@ -95,7 +95,7 @@ public class ReviewServiceImpl implements ReviewService {
         }
         if (states != null) {
             specifications.add(((root, query, criteriaBuilder) ->
-                    criteriaBuilder.in(root.get(STATE1)).value(getReviewStates(states))));
+                    criteriaBuilder.in(root.get(STATE)).value(getReviewStates(states))));
         }
         return getReviewsBySearchSpecification(specifications, pageable).stream()
                 .map(reviewMapper::toDto)
@@ -121,9 +121,9 @@ public class ReviewServiceImpl implements ReviewService {
             case EVENT:
                 return Sort.by(EVENT_ID).descending();
             case STATE:
-                return Sort.by(STATE1).ascending();
+                return Sort.by(STATE).ascending();
             case REASON:
-                return Sort.by(REASON1).ascending();
+                return Sort.by(REASON).ascending();
             case CREATED:
                 return orderByCreatedDesc;
             default:
@@ -160,7 +160,7 @@ public class ReviewServiceImpl implements ReviewService {
                 criteriaBuilder.or(
                         criteriaBuilder.like(
                                 criteriaBuilder.upper(
-                                        root.get(REASON1)),
+                                        root.get(REASON)),
                                 "%" + finalText + "%"),
                         criteriaBuilder.like(
                                 criteriaBuilder.upper(

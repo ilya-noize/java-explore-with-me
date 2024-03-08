@@ -12,7 +12,9 @@ import ru.practicum.location.mapper.LocationMapper;
 import ru.practicum.moderate.api.mapper.ReviewMapper;
 import ru.practicum.user.api.mapper.UserMapper;
 
-@Mapper(componentModel = "spring", uses = {
+import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
+
+@Mapper(componentModel = SPRING, uses = {
         UserMapper.class,
         EventRequestMapper.class,
         LocationMapper.class,

@@ -7,7 +7,9 @@ import ru.practicum.moderate.api.dto.NewReviewDto;
 import ru.practicum.moderate.api.dto.ReviewDto;
 import ru.practicum.moderate.entity.Review;
 
-@Mapper(componentModel = "spring",
+import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
+
+@Mapper(componentModel = SPRING,
         uses = {EventMapper.class}
 )
 public interface ReviewMapper {
