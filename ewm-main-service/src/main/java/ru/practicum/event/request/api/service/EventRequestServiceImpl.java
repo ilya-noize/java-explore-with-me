@@ -3,9 +3,10 @@ package ru.practicum.event.request.api.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RestController;
-import ru.practicum.constants.Constants;
 import ru.practicum.event.api.repository.EventRepository;
 import ru.practicum.event.entity.Event;
+import ru.practicum.event.entity.EventState;
+import ru.practicum.event.entity.RequestState;
 import ru.practicum.event.request.api.dto.EventRequestDto;
 import ru.practicum.event.request.api.mapper.EventRequestMapper;
 import ru.practicum.event.request.api.repository.EventRequestRepository;
@@ -24,11 +25,11 @@ import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static ru.practicum.constants.Constants.EVENT_NOT_EXISTS;
 import static ru.practicum.constants.Constants.EVENT_REQUEST_NOT_EXISTS;
-import static ru.practicum.constants.Constants.RequestState.CANCELED;
-import static ru.practicum.constants.Constants.RequestState.CONFIRMED;
-import static ru.practicum.constants.Constants.RequestState.PENDING;
 import static ru.practicum.constants.Constants.USER_NOT_EXISTS;
 import static ru.practicum.constants.Constants.checkPageable;
+import static ru.practicum.event.entity.RequestState.CANCELED;
+import static ru.practicum.event.entity.RequestState.CONFIRMED;
+import static ru.practicum.event.entity.RequestState.PENDING;
 
 @RestController
 @Slf4j
@@ -66,7 +67,7 @@ public class EventRequestServiceImpl implements EventRequestService {
             throw new ConflictException(format("The user's (ID:%d) request " +
                     "to participate in the user's event (ID:%d) exists", userId, eventId));
         }
-        if (!event.getState().equals(Constants.EventState.PUBLISHED)) {
+        if (!event.getState().equals(EventState.PUBLISHED)) {
             throw new ConflictException("Cannot participate in an unpublished event");
         }
         EventRequest request = EventRequest.builder()
@@ -102,7 +103,7 @@ public class EventRequestServiceImpl implements EventRequestService {
      * @param event Event
      * @return Request State
      */
-    private Constants.RequestState getEventRequestState(Event event) {
+    private RequestState getEventRequestState(Event event) {
         int participantLimit = event.getParticipantLimit();
         int confirmedRequests = event.getConfirmedRequests();
         if (participantLimit == 0) {
@@ -119,7 +120,7 @@ public class EventRequestServiceImpl implements EventRequestService {
         return PENDING;
     }
 
-    private Constants.RequestState confirmedRequest(Event event, int confirmedRequests) {
+    private RequestState confirmedRequest(Event event, int confirmedRequests) {
         eventRepository.updateConfirmedRequestsById(confirmedRequests, event.getId());
         return CONFIRMED;
     }

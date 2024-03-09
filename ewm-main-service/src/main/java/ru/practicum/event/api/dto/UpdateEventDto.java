@@ -5,9 +5,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.practicum.constants.Constants;
+import ru.practicum.event.entity.StateAction;
 import ru.practicum.location.dto.LocationDto;
 
+import javax.validation.constraints.PositiveOrZero;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 
@@ -57,7 +58,7 @@ public final class UpdateEventDto {
             pattern = DATE_FORMAT
     )
     private LocalDateTime eventDate;
-    private Integer participantLimit;
+    private @PositiveOrZero Integer participantLimit;
     private Boolean requestModeration;
-    private Constants.StateAction stateAction;
+    private StateAction stateAction;
 }

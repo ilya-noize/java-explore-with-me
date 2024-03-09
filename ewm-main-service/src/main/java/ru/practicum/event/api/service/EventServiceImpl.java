@@ -11,8 +11,6 @@ import ru.practicum.HitDto;
 import ru.practicum.ViewStatsDto;
 import ru.practicum.category.api.repository.CategoryRepository;
 import ru.practicum.category.entity.Category;
-import ru.practicum.constants.Constants;
-import ru.practicum.constants.Constants.StateAdminAction;
 import ru.practicum.event.api.dto.EventDto;
 import ru.practicum.event.api.dto.EventShortDto;
 import ru.practicum.event.api.dto.NewEventDto;
@@ -21,6 +19,11 @@ import ru.practicum.event.api.dto.UpdateEventDto;
 import ru.practicum.event.api.mapper.EventMapper;
 import ru.practicum.event.api.repository.EventRepository;
 import ru.practicum.event.entity.Event;
+import ru.practicum.event.entity.EventSortState;
+import ru.practicum.event.entity.EventState;
+import ru.practicum.event.entity.RequestState;
+import ru.practicum.event.entity.StateAction;
+import ru.practicum.event.entity.StateAdminAction;
 import ru.practicum.event.request.api.dto.EventRequestDto;
 import ru.practicum.event.request.api.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.event.request.api.dto.EventRequestStatusUpdateResult;
@@ -54,17 +57,18 @@ import static org.springframework.data.domain.Sort.Direction.DESC;
 import static ru.practicum.constants.Constants.CATEGORY_NOT_EXISTS;
 import static ru.practicum.constants.Constants.DATE_FORMAT;
 import static ru.practicum.constants.Constants.EVENT_NOT_EXISTS;
-import static ru.practicum.constants.Constants.EventState.PUBLISHED;
-import static ru.practicum.constants.Constants.RequestState.CONFIRMED;
-import static ru.practicum.constants.Constants.RequestState.PENDING;
-import static ru.practicum.constants.Constants.RequestState.REJECTED;
 import static ru.practicum.constants.Constants.USER_NOT_EXISTS;
 import static ru.practicum.constants.Constants.checkPageable;
+import static ru.practicum.event.entity.EventState.PUBLISHED;
+import static ru.practicum.event.entity.RequestState.CONFIRMED;
+import static ru.practicum.event.entity.RequestState.PENDING;
+import static ru.practicum.event.entity.RequestState.REJECTED;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class EventServiceImpl implements EventService {
+    private static final String EVENT_DATE = "eventDate";
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
@@ -76,7 +80,7 @@ public class EventServiceImpl implements EventService {
     private final LocationMapper locationMapper;
 
 
-    private static void validateEventState(Constants.EventState eventState) {
+    private static void validateEventState(EventState eventState) {
         if (eventState.equals(PUBLISHED)) {
             throw new ConflictException("Event is published.");
         }
@@ -93,7 +97,7 @@ public class EventServiceImpl implements EventService {
         event.setEventDate(eventDate);
         event.setCategory(category);
         event.setInitiator(initiator);
-        event.setState(Constants.EventState.PENDING);
+        event.setState(EventState.PENDING);
         event.setLocation(getLocation(dto.getLocation()));
         event.setCreatedOn(LocalDateTime.now());
         Boolean paid = dto.getPaid();
@@ -135,7 +139,7 @@ public class EventServiceImpl implements EventService {
         User initiator = getUser(userId);
         Event event = eventRepository.getByInitiatorAndId(initiator, eventId)
                 .orElseThrow(() -> new NotFoundException(EVENT_NOT_EXISTS));
-        Constants.EventState eventState = event.getState();
+        EventState eventState = event.getState();
         if (eventState.equals(PUBLISHED)) {
             throw new ConflictException("Can only change canceled events or events in the waiting state of moderation");
         }
@@ -146,26 +150,14 @@ public class EventServiceImpl implements EventService {
             event.setEventDate(newEventDate);
         }
 
-        updateTitleAnnotationDescriptionCategoryLocationPaidParticipantLimitModeration(event,
-                dto.getTitle(),
-                dto.getAnnotation(),
-                dto.getDescription(),
-                dto.getCategory(),
-                getLocation(dto.getLocation()),
-                dto.getPaid(),
-                dto.getParticipantLimit(),
-                dto.getRequestModeration()
-        );
+        updateTitleAnnotDescrCategoryLocationPaidParLimModer(event, toAdminDto(dto));
 
-        Constants.StateAction stateAction = dto.getStateAction();
+        StateAction stateAction = dto.getStateAction();
         if (stateAction != null) {
-            switch (stateAction) {
-                case SEND_TO_REVIEW:
-                    event.setState(Constants.EventState.PENDING);
-                    break;
-                case CANCEL_REVIEW:
-                    event.setState(Constants.EventState.CANCELED);
-                    break;
+            if (stateAction == StateAction.SEND_TO_REVIEW) {
+                event.setState(EventState.PENDING);
+            } else {
+                event.setState(EventState.CANCELED);
             }
         }
 
@@ -196,10 +188,10 @@ public class EventServiceImpl implements EventService {
         validateLimitRequests(eventParticipantLimit, countConfirmedRequests);
 
         EventRequestStatusUpdateResult statusUpdateResponse = new EventRequestStatusUpdateResult();
-        Constants.RequestState updateStatus = dto.getStatus();
+        RequestState updateStatus = dto.getStatus();
         for (EventRequest request : requests) {
 
-            Constants.RequestState status = request.getStatus();
+            RequestState status = request.getStatus();
 
             if (!status.equals(PENDING)) {
                 throw new ConflictException((format("Wrong request state: %s", status)));
@@ -234,23 +226,15 @@ public class EventServiceImpl implements EventService {
         validateAdminTimeMoment(dto.getEventDate());
         validateAdminTimeMoment(event.getEventDate());
         validateEventState(event.getState());
-        Constants.StateAdminAction stateAction = dto.getStateAction();
-        Constants.EventState eventState = event.getState();
-        Constants.EventState modifyEventState = getModifyEventState(stateAction, eventState);
+        StateAdminAction stateAction = dto.getStateAction();
+        EventState eventState = event.getState();
+        EventState modifyEventState = getModifyEventState(stateAction, eventState);
         event.setState(modifyEventState);
         if (modifyEventState.equals(PUBLISHED)) {
             event.setPublishedOn(LocalDateTime.now());
         }
 
-        updateTitleAnnotationDescriptionCategoryLocationPaidParticipantLimitModeration(event,
-                dto.getTitle(),
-                dto.getAnnotation(),
-                dto.getDescription(),
-                dto.getCategory(),
-                getLocation(dto.getLocation()),
-                dto.getPaid(),
-                dto.getParticipantLimit(),
-                dto.getRequestModeration());
+        updateTitleAnnotDescrCategoryLocationPaidParLimModer(event, dto);
 
         return eventMapper.toDto(eventRepository.save(event));
     }
@@ -291,7 +275,6 @@ public class EventServiceImpl implements EventService {
         addHit(httpServletRequest);
         long uniqueViews = getViews(eventId, true);
         event.setViews(uniqueViews);
-//        updateViewsByIdEvent(eventId, uniqueViews);
 
         return eventMapper.toDto(event);
     }
@@ -330,6 +313,20 @@ public class EventServiceImpl implements EventService {
                 .collect(toList());
     }
 
+    private UpdateEventAdminDto toAdminDto(UpdateEventDto dto) {
+        return UpdateEventAdminDto.builder()
+                .title(dto.getTitle())
+                .annotation(dto.getAnnotation())
+                .description(dto.getDescription())
+                .category(dto.getCategory())
+                .location(dto.getLocation())
+                .paid(dto.getPaid())
+                .eventDate(dto.getEventDate())
+                .participantLimit(dto.getParticipantLimit())
+                .requestModeration(dto.getRequestModeration())
+                .stateAction(null).build();
+    }
+
     private List<Specification<Event>> addCategoriesAndRangePeriod(List<Long> categories, LocalDateTime rangeStart, LocalDateTime rangeFinish) {
         List<Specification<Event>> specifications = new ArrayList<>();
         if (categories != null) {
@@ -341,10 +338,10 @@ public class EventServiceImpl implements EventService {
                     .in(root.get("category")).value(categoriesList)));
         }
         specifications.add(((root, query, criteriaBuilder) -> criteriaBuilder
-                .greaterThanOrEqualTo(root.get("eventDate"), rangeStart)));
+                .greaterThanOrEqualTo(root.get(EVENT_DATE), rangeStart)));
         if (rangeFinish != null) {
             specifications.add(((root, query, criteriaBuilder) -> criteriaBuilder
-                    .lessThan(root.get("eventDate"), rangeFinish)));
+                    .lessThan(root.get(EVENT_DATE), rangeFinish)));
         }
 
         return specifications;
@@ -373,12 +370,12 @@ public class EventServiceImpl implements EventService {
         return specifications;
     }
 
-    private List<Constants.EventState> getEventStateList(List<String> states) {
-        List<Constants.EventState> eventStates = new ArrayList<>();
+    private List<EventState> getEventStateList(List<String> states) {
+        List<EventState> eventStates = new ArrayList<>();
         for (String state : states) {
             state = state.toUpperCase();
-            if (Constants.EventState.isValid(state)) {
-                eventStates.add(Constants.EventState.valueOf(state));
+            if (EventState.isValid(state)) {
+                eventStates.add(EventState.valueOf(state));
             }
         }
 
@@ -415,8 +412,8 @@ public class EventServiceImpl implements EventService {
             }
         }
 
-        if (onlyAvailable != null) {
-            if (onlyAvailable) specifications.add(((root, query, criteriaBuilder) ->
+        if (onlyAvailable != null && onlyAvailable) {
+            specifications.add(((root, query, criteriaBuilder) ->
                     criteriaBuilder.or(
                             criteriaBuilder.equal(
                                     root.get("participantLimit"), 0),
@@ -466,16 +463,18 @@ public class EventServiceImpl implements EventService {
         return !response.isEmpty() ? response.get(0).getHits() : 0;
     }
 
-    private void updateTitleAnnotationDescriptionCategoryLocationPaidParticipantLimitModeration(
+    private void updateTitleAnnotDescrCategoryLocationPaidParLimModer(
             Event event,
-            String title,
-            String annotation,
-            String description,
-            Long categoryId,
-            Location location,
-            Boolean paid,
-            Integer participantLimit,
-            Boolean requestModeration) {
+            UpdateEventAdminDto dto) {
+        String title = dto.getTitle();
+        String annotation = dto.getAnnotation();
+        String description = dto.getDescription();
+        Long categoryId = dto.getCategory();
+        Location location = getLocation(dto.getLocation());
+        Boolean paid = dto.getPaid();
+        Integer participantLimit = dto.getParticipantLimit();
+        Boolean requestModeration = dto.getRequestModeration();
+
         event.setTitle(title != null ? title : event.getTitle());
         event.setAnnotation(annotation != null ? annotation : event.getAnnotation());
         event.setDescription(description != null ? description : event.getDescription());
@@ -540,14 +539,14 @@ public class EventServiceImpl implements EventService {
         return null;
     }
 
-    private Constants.EventState getModifyEventState(StateAdminAction stateAction,
-                                                     Constants.EventState eventState) {
+    private EventState getModifyEventState(StateAdminAction stateAction,
+                                           EventState eventState) {
         String eventStateErrorMessage = "The event was moderated. " +
                 "Current status of the event: %s";
         if (stateAction == null) return PUBLISHED;
         switch (stateAction) {
             case PUBLISH_EVENT:
-                if (eventState != Constants.EventState.PENDING) {
+                if (eventState != EventState.PENDING) {
                     throw new ConflictException(format(eventStateErrorMessage, eventState));
                 }
                 return PUBLISHED;
@@ -555,7 +554,7 @@ public class EventServiceImpl implements EventService {
                 if (eventState == PUBLISHED) {
                     throw new ConflictException(format(eventStateErrorMessage, eventState));
                 }
-                return Constants.EventState.CANCELED;
+                return EventState.CANCELED;
             default:
                 throw new ForbiddenException(format("Wrong status of" +
                         " the administrator's action: %s", stateAction));
@@ -564,13 +563,13 @@ public class EventServiceImpl implements EventService {
 
     private Sort getSort(String sort) {
         if (sort == null) return null;
-        Constants.EventSortState anEnum = EnumUtils.getEnum(
-                Constants.EventSortState.class, sort.toUpperCase());
+        EventSortState anEnum = EnumUtils.getEnum(
+                EventSortState.class, sort.toUpperCase());
         switch (anEnum) {
             case VIEWS:
                 return Sort.by("views").descending();
             case EVENT_DATE:
-                return Sort.by("eventDate").descending();
+                return Sort.by(EVENT_DATE).descending();
             default:
                 throw new BadRequestException("Wrong sorting parameters");
         }

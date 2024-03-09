@@ -7,8 +7,9 @@ import ru.practicum.category.api.dto.NewCategoryDto;
 import ru.practicum.category.entity.Category;
 
 import static org.mapstruct.InjectionStrategy.CONSTRUCTOR;
+import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
 
-@Mapper(componentModel = "spring", injectionStrategy = CONSTRUCTOR)
+@Mapper(componentModel = SPRING, injectionStrategy = CONSTRUCTOR)
 public interface CategoryMapper {
     CategoryDto toDto(Category category);
 

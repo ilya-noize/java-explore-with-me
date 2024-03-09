@@ -7,8 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ru.practicum.category.entity.Category;
-import ru.practicum.constants.Constants;
 import ru.practicum.location.entity.Location;
+import ru.practicum.moderate.entity.Review;
 import ru.practicum.user.entity.User;
 
 import javax.persistence.Entity;
@@ -21,8 +21,10 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
+import javax.persistence.Transient;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static ru.practicum.constants.Constants.DATE_FORMAT;
 import static ru.practicum.constants.Constants.MAX_EVENT_ANNOTATION_LENGTH;
@@ -100,6 +102,8 @@ public class Event {
     private int participantLimit;
     private boolean requestModeration;
     @Enumerated(EnumType.STRING)
-    private Constants.EventState state;
+    private EventState state;
     private long views;
+    @Transient
+    private List<Review> reviews;
 }

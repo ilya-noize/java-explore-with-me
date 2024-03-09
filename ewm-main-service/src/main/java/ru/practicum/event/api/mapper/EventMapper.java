@@ -9,13 +9,17 @@ import ru.practicum.event.api.dto.NewEventDto;
 import ru.practicum.event.entity.Event;
 import ru.practicum.event.request.api.mapper.EventRequestMapper;
 import ru.practicum.location.mapper.LocationMapper;
+import ru.practicum.moderate.api.mapper.ReviewMapper;
 import ru.practicum.user.api.mapper.UserMapper;
 
-@Mapper(componentModel = "spring", uses = {
+import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
+
+@Mapper(componentModel = SPRING, uses = {
         UserMapper.class,
         EventRequestMapper.class,
         LocationMapper.class,
-        CategoryMapper.class
+        CategoryMapper.class,
+        ReviewMapper.class
 })
 public interface EventMapper {
 
@@ -27,6 +31,7 @@ public interface EventMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "confirmedRequests", ignore = true)
+    @Mapping(target = "reviews", ignore = true)
     Event toEntity(NewEventDto newEventDto);
 
     EventDto toDto(Event event);
